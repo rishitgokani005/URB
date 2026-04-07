@@ -1,0 +1,34 @@
+.error-message {
+    color: #ff3c00; /* Color for the error text */
+    background-color: #ffe6e6; /* Light red background */
+    padding: 15px;
+    border: 1px solid #ff3c00;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 10px;
+    text-align: center;
+    width: 100%; /* Full width for small screens */
+    box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+@media screen and (min-width: 576px) {
+    .error-message {
+        font-size: 16px; /* Larger font for medium screens */
+        padding: 18px; /* Slightly more padding */
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .error-message {
+        font-size: 18px; /* Larger font for large screens */
+        max-width: 600px; /* Restrict the width on larger screens */
+        margin: 20px auto; /* Center the error message */
+    }
+}
+
+@media screen and (min-width: 992px) {
+    .error-message {
+        font-size: 22px; /* Even larger font for very large screens */
+        padding: 20px; /* More padding for readability */
+    }
+}

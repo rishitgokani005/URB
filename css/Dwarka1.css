@@ -1,0 +1,155 @@
+/* Modern City Page Layout */
+:root {
+  --primary: #FF6B6B;
+  --dark: #2c3e50;
+  --light: #f5f7fa;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: #333;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the container takes up space */
+#agency-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  padding: 160px 5% 50px;
+  /* Top padding for fixed header */
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Agency Card Styling - Premium Look */
+.agency-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-width: 400px;
+  justify-self: center;
+  /* Centers the card in its grid cell */
+  width: 100%;
+}
+
+.agency-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.agency-card a {
+  text-decoration: none;
+  color: inherit;
+  padding: 40px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.agency-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: var(--dark);
+  line-height: 1.2;
+}
+
+.facilities {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: #636e72;
+}
+
+.price-range {
+  font-weight: 600;
+  color: #e17055;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.badge {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #FF6B6B, #ff3c00);
+  color: #fff;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  transition: background 0.3s ease;
+  margin-top: auto;
+}
+
+.agency-card:hover .badge {
+  background: linear-gradient(135deg, #ff3c00, #FF6B6B);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agency-card {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.agency-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.agency-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.agency-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.agency-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  #agency-container {
+    grid-template-columns: 1fr;
+    padding: 100px 20px 40px;
+  }
+
+  .agency-card {
+    max-width: 100%;
+  }
+
+  .agency-name {
+    font-size: 1.4rem;
+  }
+}

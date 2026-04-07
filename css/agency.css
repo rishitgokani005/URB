@@ -1,0 +1,94 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f0f4f8;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: #333;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.agency-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  justify-items: center;
+  padding: 0 10px;
+}
+
+.agency-card {
+  background: linear-gradient(135deg, #e3f2fd, #90caf9);
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.agency-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.agency-card a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.agency-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #1e88e5;
+  margin-bottom: 10px;
+}
+
+.facilities {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.price-range {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #f57c00;
+}
+.badge {
+  position: absolute;
+  top: 130px;
+  left: 200px; /* Move badge to the left corner */
+  background-color: #ff5252; /* Red color for contrast */
+  color: white;
+  padding: 8px 15px; /* Increased padding for better visibility */
+  font-size: 0.5rem; /* Slightly smaller font */
+  font-weight: bold;
+  border-radius: 30px; /* Rounded badge */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a slight shadow to make it pop */
+  z-index: 1; /* Ensure the badge stays above the card content */
+  transition: background-color 0.3s ease; /* Smooth color transition on hover */
+}
+
+.agency-card:hover .badge {
+  background-color: #ff7043; /* Change color on hover for better effect */
+}
+
+@media (max-width: 768px) {
+  .agency-card {
+    width: 100%;
+  }
+}
