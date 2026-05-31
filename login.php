@@ -4,7 +4,7 @@ include('includes/db.php'); // Database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $password = $_POST['password'];
 
     // Check if user exists
     $query = "SELECT * FROM users WHERE email='$email'";
@@ -16,7 +16,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Password is correct, set session
             $_SESSION['loggedin'] = true;
             $_SESSION['email'] = $email;
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['user_role'] = $row['role'];
 
+            session_write_close();
             // Redirect to homepage
             header("Location: index.php");
             exit();

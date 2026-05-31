@@ -22,9 +22,8 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 $mysqli->query("UPDATE abookings SET payment_status = '$paymentStatus' WHERE transaction_id = '$transactionId'");
 
 if ($paymentStatus === 'success') {
-    // Update bike status
+    // Bike availability is now handled by the booking records, not abike.status
     $booking = $mysqli->query("SELECT bike_id FROM abookings WHERE transaction_id = '$transactionId'")->fetch_assoc();
-    $mysqli->query("UPDATE abike SET status = '' WHERE id = '{$booking['bike_id']}'");
 }
 
 // Send response to PhonePe

@@ -21,17 +21,12 @@ if (isset($_GET['id'])) {
     }
     
     // Fetch bike details (including price per day)
-    $bikeQuery = "SELECT model, price_per_day, status FROM abike WHERE id = '$id'";
+    $bikeQuery = "SELECT model, price_per_day FROM abike WHERE id = '$id'";
     $bikeResult = $mysqli->query($bikeQuery);
     if ($bikeResult->num_rows === 0) {
         die("Bike not found.");
     }
     $bike = $bikeResult->fetch_assoc();
-
-    // Check if bike is already booked
-    if ($bike['status'] === '1') {
-        die("This bike is already booked.");
-    }
 } else {
     die("ID is required.");
 }
@@ -60,13 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               VALUES ('{$_SESSION['user_id']}', '$id', '$booking_date', '$return_date', '$totalPrice', '$name', '$age', '$idProof', '$mobile', '$email', '$paymentMethod', '$pick_up_time', '$drop_off_time')";
 
     if ($mysqli->query($query)) {
-        // Update bike status to 'booked'
-        $updateStatusQuery = "UPDATE abike SET status = '' WHERE id = '$id'";
-        if ($mysqli->query($updateStatusQuery)) {
-            echo "<script>alert('Bike is successfully booked for you'); window.location.href='../index.php';</script>";
-        } else {
-            echo "Error updating bike status: " . $mysqli->error;
-        }
+        echo "<script>alert('Bike is successfully booked for you'); window.location.href='../index.php';</script>";
     } else {
         echo "Error: " . $query . "<br>" . $mysqli->error;
     }

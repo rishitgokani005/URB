@@ -7,7 +7,7 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$cards = $conn->query("SELECT * FROM abike WHERE status = 1 AND `id` like 'GJ%'");
+$cards = $conn->query("SELECT * FROM abike WHERE `id` like 'GJ%'");
 ?>
 
 <link rel="stylesheet" href="css/bike.css">

@@ -1,417 +1,544 @@
 <?php
 session_start();
+require 'includes/header.php';
 
-// Connect to the database
-$mysqli = new mysqli("localhost", "root", "", "dwk");
-
-// Check for connection errors
-if ($mysqli->connect_error) {
-    die("Connection failed: " . $mysqli->connect_error);
-}
-if (!isset($_GET['csrf_token']) || $_GET['csrf_token'] !== $_SESSION['csrf_token']) {
-    die("Invalid CSRF token");
-}
-
-// Check if ID is set
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    if (!is_string($id) || empty($id)) {
-        die("Invalid ID");
-    }
-    
-    // Fetch bike details (including price per day)
-    $bikeQuery = "SELECT model, price_per_day, status FROM abike WHERE id = '$id'";
-    $bikeResult = $mysqli->query($bikeQuery);
-    if ($bikeResult->num_rows === 0) {
-        die("Bike not found.");
-    }
-    $bike = $bikeResult->fetch_assoc();
-
-    // Check if bike is already booked
-    if ($bike['status'] === 'booked') {
-        die("This bike is already booked.");
-    }
-} else {
-    die("ID is required.");
-}
-
+// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    die("Please login first.");
+    header("Location: login.php");
+    exit;
 }
 
-// Handle booking submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $mysqli->real_escape_string($_POST['name']);
-    $age = $mysqli->real_escape_string($_POST['age']);
-    $idProof = $mysqli->real_escape_string($_POST['idProof']);
-    $booking_date = $mysqli->real_escape_string($_POST['booking_date']);
-    $return_date = $mysqli->real_escape_string($_POST['return_date']);
-    $pick_up_time = $mysqli->real_escape_string($_POST['pick_up_time']);
-    $drop_off_time = $mysqli->real_escape_string($_POST['drop_off_time']);
-    $mobile = $mysqli->real_escape_string($_POST['mobile']);
-    $email = $mysqli->real_escape_string($_POST['email']);
-    $paymentMethod = $mysqli->real_escape_string($_POST['paymentMethod']);
-    $totalDays = (strtotime($return_date) - strtotime($booking_date)) / (60 * 60 * 24) + 1;
-    $totalPrice = $totalDays * $bike['price_per_day'];
+// Database connection parameters
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "dwk";
 
-    // Insert into bookings table
-    $query = "INSERT INTO abookings (user_id, bike_id, booking_date, return_date, total_price, name, age, idproof, mobile, email, paymentMethod,pick_up_time, drop_off_time) 
-              VALUES ('{$_SESSION['user_id']}', '$id', '$booking_date', '$return_date', '$totalPrice', '$name', '$age', '$idProof', '$mobile', '$email', '$paymentMethod', '$pick_up_time', '$drop_off_time')";
+// Create a new MySQLi connection
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-    if ($mysqli->query($query)) {
-        // Update bike status to 'booked'
-        $updateStatusQuery = "UPDATE abike SET status = '' WHERE id = '$id'";
-        if ($mysqli->query($updateStatusQuery)) {
-            echo "<script>alert('Pay  to confirm booking.');</script>";
-        } else {
-            echo "Error updating bike status: " . $mysqli->error;
-        }
-    } else {
-        echo "Error: " . $query . "<br>" . $mysqli->error;
-    }
+// Check the connection
+if ($conn->connect_error) {
+    error_log("Connection failed: " . $conn->connect_error);
+    die("An error occurred. Please try again later.");
 }
 
-$mysqli->close();
+// Fetch the current user's ID from the session
+$user_id = $_SESSION['user_id'];
+
+// Logic for dynamic status will be handled in the loop for better precision
+// We will still keep the basic update for DB integrity if needed, 
+// but the display will be calculated on-the-fly.
+
+// Fetch user bookings with bike details
+$sql = "SELECT a.booking_id, b.model, b.color, b.address, b.image,
+               a.booking_date, a.return_date, a.booking_status,
+               a.pick_up_time, a.drop_off_time
+        FROM abookings a
+        JOIN abike b ON a.bike_id = b.id
+        WHERE a.user_id = ?
+        ORDER BY a.booking_date DESC, a.pick_up_time DESC";
+
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    error_log("Preparation failed: " . $conn->error);
+    die("An error occurred. Please try again later.");
+}
+
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
-
-
-
-<!-- HTML structure remains the same -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Form</title>
-    <link rel="icon" href="logo/urbanride1.ico"  sizes="1080x1080" type="image/x-icon">
-    <script src="https://pay.google.com/gp/p/js/pay.js" type="text/javascript"></script>
+    <link rel="icon" href="logo/urbanride1.ico" sizes="1080x1080" type="image/x-icon">
+    <title>My Bookings</title>
+
     <style>
-        /* Custom styles for the page */
-        .google-pay-button {
-            width: 300px;
-            height: 50px;
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --primary: #FF4D01;
+            --primary-light: #FFEDE5;
+            --text-main: #0F172A;
+            --text-sub: #64748B;
+            --bg-body: #F8FAFC;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
-    </style>
-    <style>
+
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 120vh;
-            margin: 0;
-            background-color: #f2f2f2;
+            background-color: var(--bg-body);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
         }
-        .booking-form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
+
+        .bookings-wrapper {
+            max-width: 1000px;
+            margin: 120px auto 40px;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .bookings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .premium-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #E2E8F0;
+            display: flex;
+            gap: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .premium-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-bike-icon {
+            width: 140px;
+            height: 100px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .card-bike-icon img {
             width: 100%;
             height: 100%;
-          
+            object-fit: cover;
         }
-        .booking-form h2 {
-            text-align: center;
-            color: #ff3c00;
-            margin-bottom: 20px;
+
+        .card-content {
+            flex-grow: 1;
         }
-        .form-group {
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 15px;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
+
+        .card-top h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
         }
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group input[type="date"],
-        .form-group input[type="email"],
-        .form-group select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+
+        .status-pill {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .form-group input:focus {
-             border: 2px solid #ff3c00;
-             outline: none;
+
+        .status-pill[data-status="pending"] { background: #FEF3C7; color: #92400E; }
+        .status-pill[data-status="ongoing"] { background: #DCFCE7; color: #166534; }
+        .status-pill[data-status="completed"] { background: #F1F5F9; color: #475569; }
+        .status-pill[data-status="cancelled"] { background: #FEE2E2; color: #991B1B; }
+
+        .card-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
         }
-        .form-group input[type="radio"] {
-            margin-right: 5px;
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
         }
-        .form-group .radio-label {
-            color: #222;
+
+        .detail-item i {
+            color: var(--primary);
+            width: 16px;
         }
-        .form-group button {
-            width: 100%;
-            padding: 10px;
-            background-color: #ff3c00;
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px dashed #E2E8F0;
+        }
+
+        .booking-id-text {
+            font-family: monospace;
+            background: #F1F5F9;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .btn-cancel-trigger {
+            background: #FEE2E2;
+            color: #EF4444;
             border: none;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: var(--transition);
         }
-        .Tform-group {
-            text-decoration: underline;
-            color:#fb6031; 
-            cursor:pointer;
-            font-size: 11px;
-            padding-bottom:10px;
-            padding-top:-20px;
+
+        .btn-cancel-trigger:hover {
+            background: #EF4444;
+            color: white;
         }
-        .form-group button:hover {
-            background-color: #e63600;
+
+        /* Slide-up Container Styles */
+        #cancellation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #cancellation-container {
+            position: fixed;
+            bottom: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            height: 90vh; /* Little space at top */
+            background: white;
+            border-radius: 40px 40px 0 0;
+            z-index: 3001;
+            padding: 40px 30px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transition: bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #cancellation-container.active {
+            bottom: 0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .close-modal {
+            background: #F1F5F9;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .reason-list {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .reason-item {
+            margin-bottom: 12px;
+        }
+
+        .reason-item input[type="radio"] {
+            display: none;
+        }
+
+        .reason-label {
+            display: block;
+            padding: 16px 20px;
+            background: #F8FAFC;
+            border: 2px solid #F1F5F9;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .reason-item input[type="radio"]:checked + .reason-label {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        #other-reason-text {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #E2E8F0;
+            display: none;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .btn-confirm-cancel {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(255, 77, 1, 0.2);
+        }
+
+        .message {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4000;
+        }
+
+        @media (max-width: 768px) {
+            .premium-card {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .card-bike-icon {
+                width: 100%;
+                height: 150px;
+            }
+
+            .card-details {
+                grid-template-columns: 1fr;
+            }
+
+            .card-top h3 {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
+
 <body>
-<div id="googlePayButton"></div>
+    <?php if (isset($_SESSION['message'])): ?>
+        <div class="message"><?= htmlspecialchars($_SESSION['message']) ?></div>
+        <?php unset($_SESSION['message']); ?>
+    <?php endif; ?>
 
-<div class="booking-form">
-    <h2>Booking Form</h2>
-    <form id="bookingForm" method="POST" action="">
-        <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+    <div class="bookings-wrapper">
+        <div class="page-header">
+            <p style="color: red;">While collecting the bike please bring your orginal pan card/driving license</p>
         </div>
-        <div class="form-group">
-            <label for="age">Age:</label>
-            <input type="number" id="age" name="age"  min="18" placeholder="above 18 years" required >
-        </div>
-        <div class="form-group">
-            <label for="idProof">ID Proof:</label>
-            <select id="idProof" name="idProof" required>
-                <option value="Driving License">Driving License</option>
-                <option value="Aadhar Card">Aadhar Card</option>
-                <option value="Voter ID">Voter ID</option>
-                <option value="Passport">Passport</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="date">Start Date:</label>
-            <input type="date" id="booking_date" name="booking_date" required>
-        </div>
-        <div class="form-group">
-        <label for="pick_up_time">Pick-Up Time:</label>
-    <select id="pick_up_time" name="pick_up_time" required>
-        <option value="09:00">9:00 AM</option>
-        <option value="10:00">10:00 AM</option>
-        <option value="11:00">11:00 AM</option>
-        <option value="12:00">12:00 PM</option>
-        <option value="13:00">1:00 PM</option>
-        <option value="14:00">2:00 PM</option>
-        <option value="15:00">3:00 PM</option>
-        <option value="16:00">4:00 PM</option>
-        <option value="17:00">5:00 PM</option>
-        <option value="18:00">6:00 PM</option>
-        <option value="19:00">7:00 PM</option>
-        <option value="20:00">8:00 PM</option>
-        <option value="21:00">9:00 PM</option>
-    </select><br>
-    </div>
-        <div class="form-group">
-            <label for="date">Return Date:</label>
-            <input type="date" id="return_date" name="return_date" required>
-        </div>
-        <div class="form-group">
-        <label for="drop_off_time">Drop-Off Time:</label>
-    <select id="drop_off_time" name="drop_off_time" required>
-        <option value="09:00">9:00 AM</option>
-        <option value="10:00">10:00 AM</option>
-        <option value="11:00">11:00 AM</option>
-        <option value="12:00">12:00 PM</option>
-        <option value="13:00">1:00 PM</option>
-        <option value="14:00">2:00 PM</option>
-        <option value="15:00">3:00 PM</option>
-        <option value="16:00">4:00 PM</option>
-        <option value="17:00">5:00 PM</option>
-        <option value="18:00">6:00 PM</option>
-        <option value="19:00">7:00 PM</option>
-        <option value="20:00">8:00 PM</option>
-        <option value="21:00">9:00 PM</option>
-    </select><br>
 
-    </div>
-        <div class="form-group">
-    <label for="mobile">Mobile:</label>
-    <input type="text" id="mobile" name="mobile" required 
-           pattern="\d{10}" 
-           maxlength="10" 
-           title="Please enter exactly 10 digits">
-</div>
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email">
-        </div>
-        <div class="form-group">
-            <label>Payment Method:</label>
-            <input type="radio" id="cash" name="paymentMethod" value="Cash" unchecked>
-            <span class="radio-label">Cash</span>
-        </div>
-        <div class="Tform-group">
-    <input type="radio" id="T&C" name="Terms&Condition" value="T&C">
-    <span class="radio-label">
-        <a href="terms.html" target="_blank">Terms & Condition</a>
-    </span>
-</div>
-<div class="form-group">
-            <label for="total_price">Total Price:</label>
-            <input type="text" id="total_price" name="total_price" readonly>
-        </div>
-        <div class="form-group">
-  <!-- Pass booking_id as a hidden input -->
-  <input type="hidden" name="name" value="<?php echo $name; ?>">
-    <button type="submit" formaction="payment_p.php">Book</button>
-        </div>
-    </form>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const dateInput = document.getElementById("booking_date");
-
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    const today = new Date();
-    const todayStr = formatDate(today);
-
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + 3);
-    const maxDateStr = formatDate(maxDate);
-
-    dateInput.setAttribute("min", todayStr);
-    dateInput.setAttribute("max", maxDateStr);
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const dateInput = document.getElementById("return_date");
-
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    const today = new Date();
-    const todayStr = formatDate(today);
-
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + 3);
-    const maxDateStr = formatDate(maxDate);
-
-    dateInput.setAttribute("min", todayStr);
-    dateInput.setAttribute("max", maxDateStr);
-});
-</script>
-
-<script>
-    const bookingDateInput = document.getElementById("booking_date");
-    const returnDateInput = document.getElementById("return_date");
-    const totalPriceInput = document.getElementById("total_price");
-
-    const pricePerDay = <?php echo $bike['price_per_day']; ?>;
-
-    function calculatePrice() {
-        const bookingDate = new Date(bookingDateInput.value);
-        const returnDate = new Date(returnDateInput.value);
-
-        if (bookingDate && returnDate && bookingDate <= returnDate) {
-            const diffTime = Math.abs(returnDate - bookingDate);
-            const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include today
-            const totalPrice = totalDays * pricePerDay;
-            totalPriceInput.value = totalPrice;
-        } else {
-            totalPriceInput.value = "";
-        }
-    }
-
-    bookingDateInput.addEventListener("change", calculatePrice);
-    returnDateInput.addEventListener("change", calculatePrice);
-</script>
-<!--                                          PAYMENT                            -->
-<script>
-        const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
-
-        const button = paymentsClient.createButton({
-            onClick: onGooglePayClicked,
-            allowedPaymentMethods: ['CARD', 'PAYPAL'],
-            buttonColor: 'black',
-            buttonType: 'short',
-        });
-
-        document.getElementById('googlePayButton').appendChild(button);
-
-        function onGooglePayClicked() {
-            const paymentDataRequest = {
-                apiVersion: 2,
-                apiVersionMinor: 0,
-                allowedPaymentMethods: [
-                    {
-                        type: 'CARD',
-                        parameters: {
-                            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-                            allowedCardNetworks: ['MASTERCARD', 'VISA']
-                        },
-                        tokenizationSpecification: {
-                            type: 'PAYMENT_GATEWAY',
-                            parameters: {
-                                gateway: 'razorpay',
-                                gatewayMerchantId: 'exampleMerchantId'
-                            }
+        <div class="bookings-grid">
+            <?php if ($result->num_rows > 0): ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <?php
+                        // Dynamic Status Calculation
+                        $current_time = new DateTime();
+                        $start_time = new DateTime($row['booking_date'] . ' ' . $row['pick_up_time']);
+                        $end_time = new DateTime($row['return_date'] . ' ' . $row['drop_off_time']);
+                        
+                        $display_status = $row['booking_status'];
+                        if ($row['booking_status'] === 'active') {
+                            if ($current_time < $start_time) $display_status = 'pending';
+                            elseif ($current_time <= $end_time) $display_status = 'ongoing';
+                            else $display_status = 'completed';
                         }
-                    }
-                ],
-                merchantInfo: {
-                    merchantName: 'rbyk',
-                    merchantId: '1234567890'
-                },
-                transactionInfo: {
-                    totalPriceStatus: 'FINAL',
-                    totalPrice: '500.00',  // Replace with the actual amount dynamically
-                    currencyCode: 'INR'
+                    ?>
+                    <div class="premium-card">
+                        <div class="card-bike-icon">
+                            <img src="uploads/<?= htmlspecialchars($row['image']) ?>" alt="<?= htmlspecialchars($row['model']) ?>">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-top">
+                                <h3><?= htmlspecialchars($row['model']) ?></h3>
+                                <span class="status-pill" data-status="<?= $display_status ?>">
+                                    <?= ucfirst($display_status) ?>
+                                </span>
+                            </div>
+
+                            <div class="card-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-palette"></i>
+                                    <span>Color: <b><?= ucfirst(htmlspecialchars($row['color'])) ?></b></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Pick Up: <b><?= htmlspecialchars($row['address']) ?></b></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Booking: <b><?= date('d M Y, h:i A', strtotime($row['booking_date'] . ' ' . $row['pick_up_time'])) ?></b></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Return: <b><?= date('d M Y, h:i A', strtotime($row['return_date'] . ' ' . $row['drop_off_time'])) ?></b></span>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <span class="booking-id-text">ID: <?= htmlspecialchars($row['booking_id']) ?></span>
+                                <?php if ($display_status === 'pending'): ?>
+                                    <button class="btn-cancel-trigger" onclick="openCancelModal('<?= $row['booking_id'] ?>')">
+                                        Cancel Bike
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="empty-state" style="padding: 100px; text-align: center; background: white; border-radius: 24px;">
+                    <i class="fas fa-calendar-xmark" style="font-size: 4rem; color: #E2E8F0; margin-bottom: 20px; display: block;"></i>
+                    <p style="font-size: 1.2rem; color: var(--text-sub);">You haven't made any bookings yet.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Cancellation Modal Overlay -->
+    <div id="cancellation-overlay" onclick="closeCancelModal()"></div>
+
+    <!-- Cancellation Container (Slide-up) -->
+    <div id="cancellation-container">
+        <div class="modal-header">
+            <h2>Cancel Booking</h2>
+            <div class="close-modal" onclick="closeCancelModal()">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        
+        <p style="color: var(--text-sub); margin-bottom: 20px;">Please tell us why you are cancelling your booking.</p>
+        
+        <form id="cancelForm" action="backend/new_cancel.php" method="POST">
+            <input type="hidden" id="cancel_booking_id" name="booking_id" value="">
+            
+            <div class="reason-list">
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r1" value="Change of plans" required>
+                    <label for="r1" class="reason-label">Change of plans</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r2" value="Found a better option">
+                    <label for="r2" class="reason-label">Found a better option</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r3" value="Too expensive">
+                    <label for="r3" class="reason-label">Too expensive</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r4" value="Booked by mistake">
+                    <label for="r4" class="reason-label">Booked by mistake</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r5" value="Travel cancelled">
+                    <label for="r5" class="reason-label">Travel cancelled</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="other" value="Other">
+                    <label for="other" class="reason-label">Other</label>
+                </div>
+                <textarea id="other-reason-text" name="other_reason" placeholder="Please specify your reason..." rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-confirm-cancel">Confirm Cancellation</button>
+        </form>
+    </div>
+
+    <script>
+        function openCancelModal(bookingId) {
+            document.getElementById('cancel_booking_id').value = bookingId;
+            const overlay = document.getElementById('cancellation-overlay');
+            const container = document.getElementById('cancellation-container');
+            
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                container.classList.add('active');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCancelModal() {
+            const overlay = document.getElementById('cancellation-overlay');
+            const container = document.getElementById('cancellation-container');
+            
+            overlay.style.opacity = '0';
+            container.classList.remove('active');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
+            document.body.style.overflow = 'auto';
+        }
+
+        // Show/hide other reason text field
+        const reasonRadios = document.querySelectorAll('input[name="reason"]');
+        const otherText = document.getElementById('other-reason-text');
+        
+        reasonRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.id === 'other') {
+                    otherText.style.display = 'block';
+                    otherText.setAttribute('required', 'required');
+                } else {
+                    otherText.style.display = 'none';
+                    otherText.removeAttribute('required');
                 }
-            };
-
-            paymentsClient.loadPaymentData(paymentDataRequest)
-                .then(function(paymentData) {
-                    // Handle the response from Google Pay
-                    processPayment(paymentData);
-                })
-                .catch(function(err) {
-                    console.error("Payment failed", err);
-                });
-        }
-
-        function processPayment(paymentData) {
-            // Send payment data to backend PHP script for processing
-            const formData = new FormData();
-            formData.append('paymentData', JSON.stringify(paymentData));
-
-            fetch('processpayment.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert("Payment successful!");
-            })
-            .catch(error => {
-                console.error("Error processing payment", error);
             });
-        }
+        });
     </script>
-
+    <?php
+    $stmt->close();
+    $conn->close();
+    ?>
+    <?php require 'includes/footer.php'; ?>
 </body>
-</html>
 
+</html>
