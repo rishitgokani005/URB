@@ -126,114 +126,249 @@ if (!$db_connection_error) {
         color: var(--text-main);
     }
 
+    /* Search Row 1 & 2 styles matching index.php (second reference image layout) */
     .search-row-1 {
-        display: grid;
-        grid-template-columns: 1fr 1.5fr 1.2fr 1.2fr 1fr;
-        gap: 15px;
-        margin-bottom: 20px;
-        align-items: center;
+        display: grid !important;
+        grid-template-columns: 1.2fr 2fr 1.5fr 1.5fr; /* 4 columns for One Way */
+        gap: 15px !important;
+        margin-bottom: 20px !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .search-row-1.round-trip-active {
+        grid-template-columns: 1fr 1.5fr 1.2fr 1.2fr 1.2fr !important; /* 5 columns for Round Trip */
     }
 
     .search-row-2 {
-        display: grid;
-        grid-template-columns: 2.2fr 2.2fr 1.2fr auto;
-        gap: 15px;
-        align-items: center;
+        display: grid !important;
+        grid-template-columns: 2.2fr 2.2fr 1.4fr 1.4fr;
+        gap: 15px !important;
+        align-items: center !important;
+        width: 100% !important;
     }
 
     .search-item {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
     }
 
     .search-item label {
-        font-size: 0.75rem;
-        font-weight: 800;
-        color: var(--text-sub);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        color: #475569 !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        margin-bottom: 6px !important;
     }
 
     .search-item select,
     .search-item input {
-        padding: 12px 14px;
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        outline: none;
-        transition: 0.3s;
-        width: 100%;
-        background-color: white;
+        background-color: white !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 12px !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        height: 50px !important;
+        padding: 12px 16px !important;
+        box-sizing: border-box !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+        width: 100% !important;
     }
 
     .search-item select:focus,
     .search-item input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 8px rgba(255, 77, 1, 0.15);
+        border-color: #FF4D01 !important;
+        box-shadow: 0 0 0 3px rgba(255, 77, 1, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* Custom dropdown arrow and native picker indicator cover-click overlays */
+    .search-float-taxi select {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 15px center !important;
+        background-size: 14px !important;
+        padding-right: 40px !important;
+        cursor: pointer !important;
+    }
+
+    .search-float-taxi input[type="date"],
+    .search-float-taxi input[type="time"] {
+        position: relative !important;
+    }
+
+    .search-float-taxi input[type="date"] {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 15px center !important;
+        background-size: 16px !important;
+        padding-right: 40px !important;
+    }
+
+    .search-float-taxi input[type="time"] {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 15px center !important;
+        background-size: 16px !important;
+        padding-right: 40px !important;
+    }
+
+    .search-float-taxi input[type="date"]::-webkit-calendar-picker-indicator,
+    .search-float-taxi input[type="time"]::-webkit-calendar-picker-indicator {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
     }
 
     /* Range slider styles */
     .distance-container {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
     }
 
     .distance-header {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        font-weight: 800;
-        color: var(--text-sub);
-        text-transform: uppercase;
+        display: flex !important;
+        justify-content: space-between !important;
+    }
+
+    .distance-header span {
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        color: #475569 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
     }
 
     .distance-slider-wrap {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border: 1.5px solid var(--border);
-        padding: 6px 12px;
-        border-radius: 12px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 15px !important;
+        border: 1px solid #E2E8F0 !important;
+        padding: 0 16px !important;
+        border-radius: 12px !important;
+        background: white !important;
+        height: 50px !important;
+        box-sizing: border-box !important;
     }
 
     .distance-slider-wrap input[type="range"] {
-        flex: 1;
-        accent-color: var(--primary);
-        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        flex: 1 !important;
+        width: 100% !important;
+        background: transparent !important;
+        outline: none !important;
+        cursor: pointer !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
-    .distance-val {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--primary);
-        min-width: 50px;
-        text-align: right;
+    .distance-slider-wrap input[type="range"]::-webkit-slider-runnable-track {
+        width: 100% !important;
+        height: 6px !important;
+        background: #334155 !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+
+    .distance-slider-wrap input[type="range"]::-moz-range-track {
+        width: 100% !important;
+        height: 6px !important;
+        background: #334155 !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+
+    .distance-slider-wrap input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px !important;
+        height: 20px !important;
+        border-radius: 50% !important;
+        background: #FF4D01 !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
+        border: none !important;
+        margin-top: -7px !important;
+        transition: transform 0.1s ease !important;
+    }
+
+    .distance-slider-wrap input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.15) !important;
+    }
+
+    .distance-slider-wrap input[type="range"]::-moz-range-thumb {
+        width: 20px !important;
+        height: 20px !important;
+        border-radius: 50% !important;
+        background: #FF4D01 !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
+        border: none !important;
+        transition: transform 0.1s ease !important;
+    }
+
+    .distance-slider-wrap input[type="range"]::-moz-range-thumb:hover {
+        transform: scale(1.15) !important;
+    }
+
+    .distance-val-stack {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1.1 !important;
+        min-width: 45px !important;
+    }
+
+    .distance-num {
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        color: #FF4D01 !important;
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    .distance-unit {
+        font-size: 0.75rem !important;
+        font-weight: 800 !important;
+        color: #FF4D01 !important;
+        text-transform: uppercase !important;
+        font-family: 'Outfit', sans-serif !important;
     }
 
     .search-go-taxi {
-        background: var(--primary);
+        background: #FF4D01 !important;
         color: white !important;
-        padding: 0 35px;
-        height: 50px;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 800;
-        transition: 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        justify-content: center;
-        align-self: flex-end;
+        height: 50px !important;
+        border-radius: 12px !important;
+        border: none !important;
+        cursor: pointer !important;
+        font-size: 0.95rem !important;
+        font-weight: 800 !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        justify-content: center !important;
+        width: 100% !important;
+        font-family: 'Outfit', sans-serif !important;
+        align-self: flex-end !important;
     }
 
     .search-go-taxi:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(255, 77, 1, 0.3);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 16px rgba(255, 77, 1, 0.3) !important;
     }
 
     /* Results Section & Filters */
@@ -736,21 +871,30 @@ if (!$db_connection_error) {
         box-shadow: 0 8px 20px rgba(255, 77, 1, 0.35);
     }
 
-    @media (max-width: 768px) {
-        .search-row-1 {
-            grid-template-columns: 1fr;
+    @media (max-width: 992px) {
+        .search-row-1, .search-row-1.round-trip-active {
+            grid-template-columns: 1fr 1fr !important;
         }
         .search-row-2 {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 1fr !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-row-1,
+        .search-row-1.round-trip-active,
+        .search-row-2 {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
         }
         .search-go-taxi {
-            width: 100%;
+            width: 100% !important;
         }
         .taxi-hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.5rem !important;
         }
         .cabs-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
         }
     }
 </style>
@@ -781,7 +925,7 @@ if (!$db_connection_error) {
         <input type="hidden" name="search_submitted" value="1">
         
         <!-- Row 1: Trip configuration -->
-        <div class="search-row-1">
+        <div class="search-row-1 <?php echo $trip_type === 'roundtrip' ? 'round-trip-active' : ''; ?>">
             <div class="search-item">
                 <label>Trip Type</label>
                 <select name="trip_type" id="trip_type" onchange="toggleReturnDate();">
@@ -841,7 +985,10 @@ if (!$db_connection_error) {
                 </div>
                 <div class="distance-slider-wrap">
                     <input type="range" name="est_distance" id="est_distance" min="10" max="600" step="5" value="<?php echo $est_distance; ?>" oninput="updateDistanceVal(this.value);">
-                    <span class="distance-val" id="distance_display"><?php echo $est_distance; ?> km</span>
+                    <div class="distance-val-stack">
+                        <span class="distance-num" id="distance_display_num"><?php echo $est_distance; ?></span>
+                        <span class="distance-unit">km</span>
+                    </div>
                 </div>
             </div>
 
@@ -851,7 +998,7 @@ if (!$db_connection_error) {
 </div>
 
 <!-- Main Results & Cabs Grid -->
-<section class="results-section">
+<section class="results-section" id="results-section">
     <?php if ($search_city): ?>
         <div class="section-title reveal" style="margin-bottom: 25px; text-align: left;">
             <span class="sub-heading">Available Taxis in <?php echo htmlspecialchars($search_city); ?></span>
@@ -1146,20 +1293,24 @@ if (!$db_connection_error) {
         const tripType = document.getElementById('trip_type').value;
         const returnWrapper = document.getElementById('return_date_wrapper');
         const returnInput = document.getElementById('return_date');
+        const row1 = returnWrapper.parentElement; // search-row-1
 
         if (tripType === 'roundtrip') {
             returnWrapper.style.display = 'block';
             returnInput.setAttribute('required', 'required');
+            row1.classList.add('round-trip-active');
         } else {
             returnWrapper.style.display = 'none';
             returnInput.removeAttribute('required');
             returnInput.value = '';
+            row1.classList.remove('round-trip-active');
         }
     }
 
     // Dynamic distance slider feedback
     function updateDistanceVal(val) {
-        document.getElementById('distance_display').innerText = val + ' km';
+        const numEl = document.getElementById('distance_display_num');
+        if (numEl) numEl.innerText = val;
     }
 
     // Validate dates before submitting search
@@ -1231,7 +1382,7 @@ if (!$db_connection_error) {
         cards.forEach(card => container.appendChild(card));
     }
 
-    // Open booking checkout modal
+    // Open booking checkout page
     function initiateCabBooking(cab, rate, baseRent) {
         if (!isLoggedIn) {
             // Show standard login modal
@@ -1239,51 +1390,16 @@ if (!$db_connection_error) {
             return;
         }
 
-        pricePerKm = rate;
-        originalBaseRent = baseRent;
-        isCouponApplied = false;
+        const pickupLoc = encodeURIComponent(document.getElementById('search_pickup_location').value);
+        const dropLoc = encodeURIComponent(document.getElementById('search_drop_location').value);
+        const tripType = encodeURIComponent(document.getElementById('trip_type').value);
+        const pickupDate = encodeURIComponent(document.getElementById('pickup_date').value);
+        const pickupTime = encodeURIComponent(document.getElementById('pickup_time').value);
+        const returnDate = encodeURIComponent(document.getElementById('return_date').value);
+        const estDist = encodeURIComponent(document.getElementById('est_distance').value);
 
-        const pickupLoc = document.getElementById('search_pickup_location').value;
-        const dropLoc = document.getElementById('search_drop_location').value;
-        const tripType = document.getElementById('trip_type').value;
-        const pickupDate = document.getElementById('pickup_date').value;
-        const pickupTime = document.getElementById('pickup_time').value;
-        const returnDate = document.getElementById('return_date').value;
-        const estDist = parseInt(document.getElementById('est_distance').value);
-
-        // Map data to fields
-        document.getElementById('form_cab_id').value = cab.id;
-        document.getElementById('form_agency_id').value = cab.agency_id;
-        document.getElementById('form_pickup_location').value = pickupLoc;
-        document.getElementById('form_drop_location').value = dropLoc;
-
-        // Display labels in summary box
-        document.getElementById('summary_cab_name').innerText = cab.cab_name;
-        document.getElementById('summary_agency').innerText = cab.agency_name;
-        document.getElementById('summary_route').innerText = pickupLoc + ' -> ' + dropLoc;
-        document.getElementById('summary_triptype').innerText = tripType === 'oneway' ? 'One Way' : 'Round Trip';
-        
-        let scheduleText = pickupDate + ' at ' + pickupTime;
-        if (tripType === 'roundtrip' && returnDate) {
-            scheduleText += ' (Return: ' + returnDate + ')';
-        }
-        document.getElementById('summary_schedule').innerText = scheduleText;
-
-        // Recalculate and display bill
-        recalcBill();
-
-        // Reset coupon inputs
-        document.getElementById('coupon_code').value = '';
-        document.getElementById('coupon_row').style.display = 'none';
-        document.getElementById('coupon_msg').style.display = 'none';
-
-        // Show Modal with animation
-        const modalOverlay = document.getElementById('booking_modal_overlay');
-        modalOverlay.style.display = 'flex';
-        setTimeout(() => {
-            modalOverlay.classList.add('active');
-        }, 10);
-        document.body.style.overflow = 'hidden';
+        // Redirect to booking-details-cab.php with all parameters
+        window.location.href = `booking-details-cab.php?cab_id=${cab.id}&rate=${rate}&base_rent=${baseRent}&pickup_location=${pickupLoc}&drop_location=${dropLoc}&trip_type=${tripType}&pickup_date=${pickupDate}&pickup_time=${pickupTime}&return_date=${returnDate}&est_distance=${estDist}`;
     }
 
     function closeCabBookingModal() {
@@ -1343,6 +1459,16 @@ if (!$db_connection_error) {
             recalcBill();
         }
     }
+
+    // Smooth scroll to results on query search
+    <?php if (!empty($search_city)): ?>
+    document.addEventListener("DOMContentLoaded", function() {
+        const resultsSec = document.getElementById("results-section");
+        if (resultsSec) {
+            resultsSec.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    });
+    <?php endif; ?>
 
     // Scroll reveal observer mirroring index.php animations
     const observer = new IntersectionObserver((entries) => {
