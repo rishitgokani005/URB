@@ -1,7 +1,12 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$is_in_agency = (basename(dirname($_SERVER['PHP_SELF'])) === 'agency');
+$agency_path = $is_in_agency ? '' : '../agency/';
+
 if (!isset($_SESSION['agency_logged_in'])) {
-    header('Location: index.php');
+    header('Location: ' . $agency_path . 'index.php');
     exit;
 }
 include('../includes/db.php');
@@ -245,20 +250,22 @@ $base_url = '../';
 
 <body>
     <nav class="admin-nav">
-        <a href="dashboard.php" class="logo" style="color: white;">Urban<span style="color: var(--primary);">Ride</span> <span style="font-size: 0.6rem; color: #94A3B8; margin-left: 5px;">AGENCY</span></a>
+        <a href="<?php echo $agency_path; ?>dashboard.php" class="logo" style="color: white;">Urban<span style="color: var(--primary);">Ride</span> <span style="font-size: 0.6rem; color: #94A3B8; margin-left: 5px;">AGENCY</span></a>
         
         <div id="admin-menu-bar" class="fas fa-bars" style="display: none; cursor: pointer; font-size: 1.5rem; color: white;"></div>
 
         <div class="admin-links" id="admin-nav-links">
-            <a href="dashboard.php"
+            <a href="<?php echo $agency_path; ?>dashboard.php"
                 class="<?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">Home</a>
-            <a href="bikes.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'bikes.php' ? 'active' : ''; ?>">Our
+            <a href="<?php echo $agency_path; ?>bikes.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'bikes.php' ? 'active' : ''; ?>">Our
                 Bikes</a>
-            <a href="bookings.php"
+            <a href="<?php echo $agency_path; ?>bookings.php"
                 class="<?php echo basename($_SERVER['PHP_SELF']) == 'bookings.php' ? 'active' : ''; ?>">Bookings</a>
-            <a href="completed_bookings.php"
+            <a href="<?php echo $agency_path; ?>completed_bookings.php"
                 class="<?php echo basename($_SERVER['PHP_SELF']) == 'completed_bookings.php' ? 'active' : ''; ?>">Completed Bookings</a>
-            <a href="logout.php" style="color: #F87171;"><i class="fas fa-power-off"></i></a>
+            <a href="../Taxi-Booking/manage-cabs.php"
+                class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-cabs.php' ? 'active' : ''; ?>"><i class="fas fa-taxi" style="margin-right:5px;"></i>Manage Cabs</a>
+            <a href="../logout.php" style="color: #F87171;"><i class="fas fa-power-off"></i></a>
         </div>
     </nav>
 

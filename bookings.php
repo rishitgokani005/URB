@@ -30,7 +30,7 @@ $user_id = $_SESSION['user_id'];
 // We will still keep the basic update for DB integrity if needed, 
 // but the display will be calculated on-the-fly.
 
-// Fetch user bookings with bike details
+// Fetch user BIKE bookings
 $sql = "SELECT a.booking_id, b.model, b.color, b.address, b.image,
                a.booking_date, a.return_date, a.booking_status,
                a.pick_up_time, a.drop_off_time
@@ -40,14 +40,29 @@ $sql = "SELECT a.booking_id, b.model, b.color, b.address, b.image,
         ORDER BY a.booking_date DESC, a.pick_up_time DESC";
 
 $stmt = $conn->prepare($sql);
-if (!$stmt) {
-    error_log("Preparation failed: " . $conn->error);
-    die("An error occurred. Please try again later.");
-}
-
+if (!$stmt) { die("An error occurred. Please try again later."); }
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Fetch user CAB bookings
+$cab_sql = "SELECT c.booking_id, c.cab_id, c.pickup_location, c.drop_location,
+                   c.booking_date, c.return_date, c.booking_status,
+                   c.pick_up_time, c.total_price, c.trip_type,
+                   a.cab_name, a.seats, a.image, a.image2 as ac_status
+            FROM acabookings c
+            JOIN acab a ON c.cab_id = a.id
+            WHERE c.user_id = ?
+            ORDER BY c.booking_date DESC";
+
+$cab_stmt = $conn->prepare($cab_sql);
+if ($cab_stmt) {
+    $cab_stmt->bind_param("i", $user_id);
+    $cab_stmt->execute();
+    $cab_result = $cab_stmt->get_result();
+} else {
+    $cab_result = null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -373,23 +388,36 @@ $result = $stmt->get_result();
 
     <div class="bookings-wrapper">
         <div class="page-header">
-            <p style="color: red;">While collecting the bike please bring your orginal pan card/driving license</p>
+            <h1 style="font-size:2rem; font-weight:800; margin-bottom:8px;">My Bookings</h1>
+            <p style="color: var(--text-sub);">View and manage all your rides in one place</p>
         </div>
 
-        <div class="bookings-grid">
+        <!-- Tab Switcher -->
+        <div style="display:flex; gap:12px; margin-bottom:30px; border-bottom:2px solid #E2E8F0; padding-bottom:0;">
+            <button onclick="switchTab('bikes')" id="tab-bikes"
+                style="padding:12px 24px; border:none; background:none; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:700; color:var(--primary); border-bottom:3px solid var(--primary); margin-bottom:-2px; cursor:pointer; transition:0.2s;">
+                <i class="fas fa-motorcycle" style="margin-right:8px;"></i>Bike Bookings
+            </button>
+            <button onclick="switchTab('cabs')" id="tab-cabs"
+                style="padding:12px 24px; border:none; background:none; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:700; color:var(--text-sub); border-bottom:3px solid transparent; margin-bottom:-2px; cursor:pointer; transition:0.2s;">
+                <i class="fas fa-taxi" style="margin-right:8px;"></i>Taxi Bookings
+            </button>
+        </div>
+
+        <!-- ===== BIKE BOOKINGS ===== -->
+        <div id="section-bikes" class="bookings-grid">
+            <p style="color:#94A3B8; font-size:0.8rem; margin-bottom:10px;"><i class="fas fa-circle-info" style="margin-right:5px;"></i>While collecting the bike please bring your original PAN card / driving license</p>
             <?php if ($result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <?php
-                        // Dynamic Status Calculation
                         $current_time = new DateTime();
-                        $start_time = new DateTime($row['booking_date'] . ' ' . $row['pick_up_time']);
-                        $end_time = new DateTime($row['return_date'] . ' ' . $row['drop_off_time']);
-                        
+                        $start_time   = new DateTime($row['booking_date'] . ' ' . $row['pick_up_time']);
+                        $end_time     = new DateTime($row['return_date']  . ' ' . $row['drop_off_time']);
                         $display_status = $row['booking_status'];
                         if ($row['booking_status'] === 'active') {
-                            if ($current_time < $start_time) $display_status = 'pending';
-                            elseif ($current_time <= $end_time) $display_status = 'ongoing';
-                            else $display_status = 'completed';
+                            if ($current_time < $start_time)      $display_status = 'pending';
+                            elseif ($current_time <= $end_time)   $display_status = 'ongoing';
+                            else                                   $display_status = 'completed';
                         }
                     ?>
                     <div class="premium-card">
@@ -399,45 +427,80 @@ $result = $stmt->get_result();
                         <div class="card-content">
                             <div class="card-top">
                                 <h3><?= htmlspecialchars($row['model']) ?></h3>
-                                <span class="status-pill" data-status="<?= $display_status ?>">
-                                    <?= ucfirst($display_status) ?>
-                                </span>
+                                <span class="status-pill" data-status="<?= $display_status ?>"><?= ucfirst($display_status) ?></span>
                             </div>
-
                             <div class="card-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-palette"></i>
-                                    <span>Color: <b><?= ucfirst(htmlspecialchars($row['color'])) ?></b></span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>Pick Up: <b><?= htmlspecialchars($row['address']) ?></b></span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span>Booking: <b><?= date('d M Y, h:i A', strtotime($row['booking_date'] . ' ' . $row['pick_up_time'])) ?></b></span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-calendar-check"></i>
-                                    <span>Return: <b><?= date('d M Y, h:i A', strtotime($row['return_date'] . ' ' . $row['drop_off_time'])) ?></b></span>
-                                </div>
+                                <div class="detail-item"><i class="fas fa-palette"></i><span>Color: <b><?= ucfirst(htmlspecialchars($row['color'])) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-map-marker-alt"></i><span>Pick Up: <b><?= htmlspecialchars($row['address']) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>From: <b><?= date('d M Y, h:i A', strtotime($row['booking_date'].' '.$row['pick_up_time'])) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-calendar-check"></i><span>Return: <b><?= date('d M Y, h:i A', strtotime($row['return_date'].' '.$row['drop_off_time'])) ?></b></span></div>
                             </div>
-
                             <div class="card-footer">
                                 <span class="booking-id-text">ID: <?= htmlspecialchars($row['booking_id']) ?></span>
                                 <?php if ($display_status === 'pending'): ?>
-                                    <button class="btn-cancel-trigger" onclick="openCancelModal('<?= $row['booking_id'] ?>')">
-                                        Cancel Bike
-                                    </button>
+                                    <button class="btn-cancel-trigger" onclick="openCancelModal('<?= $row['booking_id'] ?>')">Cancel Bike</button>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <div class="empty-state" style="padding: 100px; text-align: center; background: white; border-radius: 24px;">
-                    <i class="fas fa-calendar-xmark" style="font-size: 4rem; color: #E2E8F0; margin-bottom: 20px; display: block;"></i>
-                    <p style="font-size: 1.2rem; color: var(--text-sub);">You haven't made any bookings yet.</p>
+                <div class="empty-state" style="padding:80px; text-align:center; background:white; border-radius:24px;">
+                    <i class="fas fa-motorcycle" style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
+                    <p style="font-size:1.2rem; color:var(--text-sub);">No bike bookings yet.</p>
+                    <a href="agencies.php" style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Browse Bikes</a>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- ===== CAB BOOKINGS ===== -->
+        <div id="section-cabs" class="bookings-grid" style="display:none;">
+            <?php if ($cab_result && $cab_result->num_rows > 0): ?>
+                <?php while ($crow = $cab_result->fetch_assoc()): ?>
+                    <?php
+                        $current_time  = new DateTime();
+                        $cstart        = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
+                        $cstatus       = $crow['booking_status'];
+                        if ($cstatus === 'active') {
+                            if ($current_time < $cstart) $cstatus = 'pending';
+                            else $cstatus = 'ongoing';
+                        }
+                        $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
+                    ?>
+                    <div class="premium-card">
+                        <div class="card-bike-icon" style="background:#EFF6FF;">
+                            <img src="<?= $cab_img ?>" alt="<?= htmlspecialchars($crow['cab_name']) ?>" onerror="this.src='images/home_3.png'">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-top">
+                                <h3><?= htmlspecialchars($crow['cab_name']) ?></h3>
+                                <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-item"><i class="fas fa-couch"></i><span>Seats: <b><?= $crow['seats'] ?> Seater</b></span></div>
+                                <div class="detail-item"><i class="fas fa-snowflake"></i><span>AC: <b><?= htmlspecialchars($crow['ac_status'] ?? 'AC') ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-location-dot"></i><span>From: <b><?= htmlspecialchars($crow['pickup_location']) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-flag-checkered"></i><span>To: <b><?= htmlspecialchars($crow['drop_location']) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?> at <?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-indian-rupee-sign"></i><span>Total: <b>₹<?= number_format($crow['total_price'], 2) ?></b></span></div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="booking-id-text">ID: <?= htmlspecialchars($crow['booking_id']) ?></span>
+                                <?php if ($cstatus === 'pending'): ?>
+                                    <form method="POST" action="Taxi-Booking/cancel_booking.php" style="display:inline;">
+                                        <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
+                                        <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="empty-state" style="padding:80px; text-align:center; background:white; border-radius:24px;">
+                    <i class="fas fa-taxi" style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
+                    <p style="font-size:1.2rem; color:var(--text-sub);">No taxi bookings yet.</p>
+                    <a href="Taxi-Booking/taxi-booking.php" style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Book a Cab</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -493,11 +556,38 @@ $result = $stmt->get_result();
     </div>
 
     <script>
+        // Tab switching
+        function switchTab(tab) {
+            const bikeSection = document.getElementById('section-bikes');
+            const cabSection  = document.getElementById('section-cabs');
+            const bikeTab     = document.getElementById('tab-bikes');
+            const cabTab      = document.getElementById('tab-cabs');
+
+            if (tab === 'bikes') {
+                bikeSection.style.display = 'grid';
+                cabSection.style.display  = 'none';
+                bikeTab.style.color = 'var(--primary)';
+                bikeTab.style.borderBottomColor = 'var(--primary)';
+                cabTab.style.color = 'var(--text-sub)';
+                cabTab.style.borderBottomColor = 'transparent';
+            } else {
+                bikeSection.style.display = 'none';
+                cabSection.style.display  = 'grid';
+                cabTab.style.color = 'var(--primary)';
+                cabTab.style.borderBottomColor = 'var(--primary)';
+                bikeTab.style.color = 'var(--text-sub)';
+                bikeTab.style.borderBottomColor = 'transparent';
+            }
+        }
+
+        // Check URL param to auto-switch tab
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'cabs') switchTab('cabs');
+
         function openCancelModal(bookingId) {
             document.getElementById('cancel_booking_id').value = bookingId;
             const overlay = document.getElementById('cancellation-overlay');
             const container = document.getElementById('cancellation-container');
-            
             overlay.style.display = 'block';
             setTimeout(() => {
                 overlay.style.opacity = '1';
@@ -509,19 +599,14 @@ $result = $stmt->get_result();
         function closeCancelModal() {
             const overlay = document.getElementById('cancellation-overlay');
             const container = document.getElementById('cancellation-container');
-            
             overlay.style.opacity = '0';
             container.classList.remove('active');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
             document.body.style.overflow = 'auto';
         }
 
-        // Show/hide other reason text field
         const reasonRadios = document.querySelectorAll('input[name="reason"]');
         const otherText = document.getElementById('other-reason-text');
-        
         reasonRadios.forEach(radio => {
             radio.addEventListener('change', () => {
                 if (radio.id === 'other') {

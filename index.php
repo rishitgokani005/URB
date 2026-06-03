@@ -174,6 +174,101 @@ require 'includes/header.php';
         </div>
 </section>
 
+<!-- Taxi Booking CTA Section -->
+<section class="reveal" style="padding: 80px 7%; background: white;">
+    <div style="
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F172A 100%);
+        border-radius: 32px;
+        padding: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 40px;
+        position: relative;
+        overflow: hidden;
+    ">
+        <!-- Glow accent -->
+        <div style="position:absolute; top:-60px; right:120px; width:300px; height:300px; background:radial-gradient(circle, rgba(255,77,1,0.25) 0%, transparent 70%); pointer-events:none;"></div>
+
+        <!-- Left: Text & CTA -->
+        <div style="flex:1; position:relative; z-index:2;">
+            <span style="background:rgba(255,77,1,0.15); color:#FF4D01; padding:6px 16px; border-radius:50px; font-size:0.8rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;">New Service</span>
+            <h2 style="font-family:'Outfit',sans-serif; font-size:2.8rem; font-weight:900; color:white; margin:18px 0 14px; line-height:1.2;">
+                Need a Cab? <br><span style="color:#FF4D01;">We've Got You Covered.</span>
+            </h2>
+            <p style="color:#94A3B8; font-size:1rem; line-height:1.7; max-width:480px; margin-bottom:30px;">
+                Book a comfortable ride for your entire group. Choose from 4, 7, or 11-seater cabs with AC or non-AC options — starting from just ₹10/km.
+            </p>
+
+            <!-- Feature Badges -->
+            <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:35px;">
+                <span style="background:rgba(255,255,255,0.08); color:#CBD5E1; padding:8px 18px; border-radius:50px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-snowflake" style="color:#60A5FA;"></i> AC &amp; Non-AC
+                </span>
+                <span style="background:rgba(255,255,255,0.08); color:#CBD5E1; padding:8px 18px; border-radius:50px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-users" style="color:#34D399;"></i> 4 / 7 / 11 Seater
+                </span>
+                <span style="background:rgba(255,255,255,0.08); color:#CBD5E1; padding:8px 18px; border-radius:50px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-location-dot" style="color:#F87171;"></i> Doorstep Pickup
+                </span>
+                <span style="background:rgba(255,255,255,0.08); color:#CBD5E1; padding:8px 18px; border-radius:50px; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-road" style="color:#FBBF24;"></i> One-way &amp; Round Trip
+                </span>
+            </div>
+
+            <a href="Taxi-Booking/taxi-booking.php" style="
+                display: inline-flex; align-items: center; gap: 10px;
+                background: #FF4D01; color: white;
+                padding: 16px 36px; border-radius: 50px;
+                font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700;
+                text-decoration: none;
+                box-shadow: 0 10px 30px rgba(255,77,1,0.35);
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 35px rgba(255,77,1,0.45)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(255,77,1,0.35)'">
+                Book a Cab Now <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Right: Animated Cab Icon -->
+        <div style="flex-shrink:0; position:relative; z-index:2; text-align:center; display:flex; flex-direction:column; align-items:center; gap:20px;">
+            <div style="
+                width: 160px; height: 160px;
+                background: rgba(255,77,1,0.12);
+                border-radius: 50%;
+                display: flex; align-items:center; justify-content:center;
+                animation: floatCab 3s ease-in-out infinite;
+                border: 1px solid rgba(255,77,1,0.2);
+            ">
+                <i class="fas fa-taxi" style="font-size:5rem; color:#FF4D01;"></i>
+            </div>
+            <div style="display:flex; gap:15px;">
+                <div style="text-align:center;">
+                    <div style="font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:900; color:white;">₹10</div>
+                    <div style="color:#64748B; font-size:0.75rem;">Per KM</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div style="text-align:center;">
+                    <div style="font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:900; color:white;">24/7</div>
+                    <div style="color:#64748B; font-size:0.75rem;">Available</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div style="text-align:center;">
+                    <div style="font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:900; color:white;">11</div>
+                    <div style="color:#64748B; font-size:0.75rem;">Max Seats</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+@keyframes floatCab {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+}
+</style>
+
 <!-- Lite Search Section -->
 <section class="lite-search reveal" style="padding: 100px 7% 60px; background: var(--bg-sub);">
     <div class="section-title">

@@ -2,9 +2,11 @@
 include('header.php');
 
 // Fetch Stats
-$total_agencies = $conn->query("SELECT COUNT(*) FROM agencies")->fetch_row()[0];
-$total_bookings = $conn->query("SELECT COUNT(*) FROM abookings")->fetch_row()[0];
-$total_cities = $conn->query("SELECT COUNT(DISTINCT city) FROM agencies")->fetch_row()[0];
+$total_agencies  = $conn->query("SELECT COUNT(*) FROM agencies")->fetch_row()[0];
+$total_bookings  = $conn->query("SELECT COUNT(*) FROM abookings")->fetch_row()[0];
+$total_cities    = $conn->query("SELECT COUNT(DISTINCT city) FROM agencies")->fetch_row()[0];
+$total_cabs      = $conn->query("SELECT COUNT(*) FROM acab")->fetch_row()[0];
+$total_cab_books = $conn->query("SELECT COUNT(*) FROM acabookings")->fetch_row()[0];
 ?>
 
 <div class="section-title reveal">
@@ -21,10 +23,24 @@ $total_cities = $conn->query("SELECT COUNT(DISTINCT city) FROM agencies")->fetch
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
         <div class="stat-info">
-            <h4>Total Bookings</h4>
+            <h4>Bike Bookings</h4>
             <b><?php echo $total_bookings; ?></b>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#EFF6FF; color:#2563EB;"><i class="fas fa-taxi"></i></div>
+        <div class="stat-info">
+            <h4>Cab Fleet</h4>
+            <b><?php echo $total_cabs; ?></b>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#F0FDF4; color:#16A34A;"><i class="fas fa-route"></i></div>
+        <div class="stat-info">
+            <h4>Taxi Bookings</h4>
+            <b><?php echo $total_cab_books; ?></b>
         </div>
     </div>
     <div class="stat-card">

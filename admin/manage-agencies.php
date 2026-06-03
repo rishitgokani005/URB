@@ -73,8 +73,8 @@ if (isset($_GET['delete'])) {
             <input type="email" name="email" placeholder="Business Email (Used for login)" required>
             <input type="password" name="password" placeholder="System Password" required>
             <div style="display: flex; gap: 15px; margin-top: 20px;">
-                <button type="submit" name="add_agency" class="btn-signup" style="flex: 2;">Confirm Registration</button>
-                <button type="button" class="btn-login" onclick="document.getElementById('addModal').style.display='none'" style="flex: 1;">Cancel</button>
+                <button type="submit" name="add_agency" class="btn-signup" style="flex: 2; margin-top: 0;">Confirm Registration</button>
+                <button type="button" onclick="document.getElementById('addModal').style.display='none'" style="flex: 1; background: #F8FAFC; color: #475569; border: 1.5px solid var(--border); padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.background='#F1F5F9'; this.style.color='#0F172A'; this.style.borderColor='#94A3B8';" onmouseout="this.style.background='#F8FAFC'; this.style.color='#475569'; this.style.borderColor='var(--border)';">Cancel</button>
             </div>
         </form>
     </div>

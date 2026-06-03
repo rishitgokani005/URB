@@ -1,14 +1,13 @@
 <?php
 include('header.php');
 
-// Specific Agency Stats
-$total_bikes = $conn->query("SELECT COUNT(*) FROM abike WHERE agency_id = '$agency_id'")->fetch_row()[0];
-$total_bookings = $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id = '$agency_id'")->fetch_row()[0];
-$active_bookings = $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id = '$agency_id' AND (booking_status = 'active' OR booking_status = 'confirmed')")->fetch_row()[0];
+// Fetch cab fleet size & bookings for this agency
+$total_cabs     = $conn->query("SELECT COUNT(*) FROM acab WHERE agency_id = '$agency_id'")->fetch_row()[0];
+$total_cab_books= $conn->query("SELECT COUNT(*) FROM acabookings WHERE agency_id = '$agency_id'")->fetch_row()[0];
 ?>
 
 <div class="section-title reveal">
-    <span class="sub-heading">Welcome back, Super Admin</span>
+    <span class="sub-heading">Welcome back</span>
     <h2><?php echo $agency_name; ?> Overview</h2>
 </div>
 
@@ -16,22 +15,36 @@ $active_bookings = $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id 
     <div class="stat-card">
         <div class="stat-icon"><i class="fas fa-motorcycle"></i></div>
         <div class="stat-info">
-            <h4>Fleet Size</h4>
-            <b><?php echo $total_bikes; ?></b>
+            <h4>Bike Fleet</h4>
+            <b><?php echo $conn->query("SELECT COUNT(*) FROM abike WHERE agency_id = '$agency_id'")->fetch_row()[0]; ?></b>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
         <div class="stat-info">
-            <h4>All Bookings</h4>
-            <b><?php echo $total_bookings; ?></b>
+            <h4>Bike Bookings</h4>
+            <b><?php echo $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id = '$agency_id'")->fetch_row()[0]; ?></b>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#EFF6FF; color:#2563EB;"><i class="fas fa-taxi"></i></div>
+        <div class="stat-info">
+            <h4>Cab Fleet</h4>
+            <b><?php echo $total_cabs; ?></b>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#F0FDF4; color:#16A34A;"><i class="fas fa-route"></i></div>
+        <div class="stat-info">
+            <h4>Taxi Bookings</h4>
+            <b><?php echo $total_cab_books; ?></b>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon"><i class="fas fa-clock"></i></div>
         <div class="stat-info">
-            <h4>Current Rides</h4>
-            <b><?php echo $active_bookings; ?></b>
+            <h4>Active Rides</h4>
+            <b><?php echo $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id = '$agency_id' AND booking_status = 'active'")->fetch_row()[0]; ?></b>
         </div>
     </div>
 </div>
@@ -75,9 +88,7 @@ $active_bookings = $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id 
 
 <script>
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.classList.add('revealed');
-        });
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('revealed'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>

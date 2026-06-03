@@ -1,7 +1,12 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$is_in_admin = (basename(dirname($_SERVER['PHP_SELF'])) === 'admin');
+$admin_path = $is_in_admin ? '' : '../admin/';
+
 if (!isset($_SESSION['admin_logged_in'])) {
-    header('Location: index.php');
+    header('Location: ' . $admin_path . 'index.php');
     exit;
 }
 include('../includes/db.php');
@@ -124,12 +129,13 @@ $base_url = '../';
 </head>
 <body>
     <nav class="admin-nav">
-        <a href="dashboard.php" class="logo" style="color: white;">Urban<span>Ride</span> Admin</a>
+        <a href="<?php echo $admin_path; ?>dashboard.php" class="logo" style="color: white;">Urban<span>Ride</span> Admin</a>
         <div class="admin-links">
-            <a href="dashboard.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a>
-            <a href="manage-agencies.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-agencies.php' ? 'active' : ''; ?>">Partners</a>
-            <a href="view-bookings.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'view-bookings.php' ? 'active' : ''; ?>">All Bookings</a>
-            <a href="logout.php" style="color: #F87171;"><i class="fas fa-sign-out-alt"></i></a>
+            <a href="<?php echo $admin_path; ?>dashboard.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a>
+            <a href="<?php echo $admin_path; ?>manage-agencies.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-agencies.php' ? 'active' : ''; ?>">Partners</a>
+            <a href="<?php echo $admin_path; ?>view-bookings.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'view-bookings.php' ? 'active' : ''; ?>">All Bookings</a>
+            <a href="../Taxi-Booking/manage-cabs.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-cabs.php' ? 'active' : ''; ?>"><i class="fas fa-taxi" style="margin-right:5px;"></i>Manage Cabs</a>
+            <a href="../logout.php" style="color: #F87171;"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </nav>
     <div class="admin-content">

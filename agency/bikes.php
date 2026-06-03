@@ -104,7 +104,7 @@ if (isset($_POST['offline_book'])) {
             </div>
 
             <div class="card-actions">
-                <button onclick="openBookModal('<?php echo $row['id']; ?>', '<?php echo $row['model']; ?>')" class="btn-signup" style="width: 100%; border-radius: 12px; margin-bottom: 10px;">
+                <button onclick="openBookModal('<?php echo $row['id']; ?>', '<?php echo $row['model']; ?>')" class="btn-signup" style="width: 100%; border-radius: 12px; margin-bottom: 10px; margin-top: 0;">
                     <i class="fas fa-calendar-check"></i> Book Offline
                 </button>
                 <a href="?delete=<?php echo $row['id']; ?>" class="btn-delete" onclick="return confirm('Remove this vehicle from fleet?')">
@@ -261,9 +261,9 @@ if (isset($_POST['offline_book'])) {
                 <input type="file" name="image4" required style="font-size: 0.7rem;">
             </div>
             
-            <div style="display: flex; gap: 15px;">
-                <button type="submit" name="add_bike" class="btn-signup" style="flex: 2;">Add to Fleet</button>
-                <button type="button" class="btn-login" onclick="document.getElementById('addModal').style.display='none'" style="flex: 1; border: 1px solid var(--border); border-radius: 50px;">Cancel</button>
+            <div style="display: flex; gap: 15px; margin-top: 10px;">
+                <button type="submit" name="add_bike" class="btn-signup" style="flex: 2; margin-top: 0;">Add to Fleet</button>
+                <button type="button" onclick="document.getElementById('addModal').style.display='none'" style="flex: 1; background: #F8FAFC; color: #475569; border: 1.5px solid var(--border); padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.background='#F1F5F9'; this.style.color='#0F172A'; this.style.borderColor='#94A3B8';" onmouseout="this.style.background='#F8FAFC'; this.style.color='#475569'; this.style.borderColor='var(--border)';">Cancel</button>
             </div>
         </form>
     </div>
@@ -285,8 +285,8 @@ if (isset($_POST['offline_book'])) {
                 <input type="date" name="end_date" min="<?php echo date('Y-m-d'); ?>" required>
             </div>
             <div style="display: flex; gap: 15px; margin-top: 20px;">
-                <button type="submit" name="offline_book" class="btn-signup" style="flex: 2;">Lock Vehicle</button>
-                <button type="button" class="btn-login" onclick="document.getElementById('bookModal').style.display='none'" style="flex: 1; border: 1px solid var(--border); border-radius: 50px;">Cancel</button>
+                <button type="submit" name="offline_book" class="btn-signup" style="flex: 2; margin-top: 0;">Lock Vehicle</button>
+                <button type="button" onclick="document.getElementById('bookModal').style.display='none'" style="flex: 1; background: #F8FAFC; color: #475569; border: 1.5px solid var(--border); padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: center;" onmouseover="this.style.background='#F1F5F9'; this.style.color='#0F172A'; this.style.borderColor='#94A3B8';" onmouseout="this.style.background='#F8FAFC'; this.style.color='#475569'; this.style.borderColor='var(--border)';">Cancel</button>
             </div>
         </form>
     </div>

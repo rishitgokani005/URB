@@ -2,7 +2,9 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$base_url = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) ? '../' : '';
+$base_url = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false || strpos($_SERVER['PHP_SELF'], '/Taxi-Booking/') !== false) ? '../' : '';
+
+
 
 // Auto-Unlock Mechanism
 if (isset($_SESSION['pending_booking_id'])) {
@@ -49,7 +51,8 @@ if (isset($_SESSION['pending_booking_id'])) {
             <a href="<?php echo $base_url; ?>index.php">Home</a>
             <a href="<?php echo isset($_SESSION['loggedin']) ? $base_url . 'bookings.php' : 'javascript:void(0)'; ?>"
                 onclick="<?php echo !isset($_SESSION['loggedin']) ? 'showLoginModal();' : ''; ?>">My Bookings</a>
-            <a href="<?php echo $base_url; ?>index.php#fleet">Our Fleet</a>
+            <a href="<?php echo $base_url; ?>Taxi-Booking/taxi-booking.php">Book Taxi</a>
+                <a href="<?php echo $base_url; ?>index.php#fleet">Our Fleet</a>
             <a href="<?php echo $base_url; ?>index.php#how-it-works">How It Works</a>
         </nav>
 
