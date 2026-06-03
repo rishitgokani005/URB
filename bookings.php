@@ -23,6 +23,12 @@ if ($conn->connect_error) {
     die("An error occurred. Please try again later.");
 }
 
+// Ensure 'phone' column exists in 'agencies' table (Quick Auto-Migration)
+$check_col = $conn->query("SHOW COLUMNS FROM agencies LIKE 'phone'");
+if ($check_col && $check_col->num_rows == 0) {
+    $conn->query("ALTER TABLE agencies ADD COLUMN phone VARCHAR(15) AFTER email");
+}
+
 // Fetch the current user's ID from the session
 $user_id = $_SESSION['user_id'];
 
@@ -33,14 +39,17 @@ $user_id = $_SESSION['user_id'];
 // Fetch user BIKE bookings
 $sql = "SELECT a.booking_id, b.model, b.color, b.address, b.image,
                a.booking_date, a.return_date, a.booking_status,
-               a.pick_up_time, a.drop_off_time
+               a.pick_up_time, a.drop_off_time, ag.phone as agency_phone, ag.name as agency_name
         FROM abookings a
         JOIN abike b ON a.bike_id = b.id
+        LEFT JOIN agencies ag ON b.agency_id = ag.id
         WHERE a.user_id = ?
         ORDER BY a.booking_date DESC, a.pick_up_time DESC";
 
 $stmt = $conn->prepare($sql);
-if (!$stmt) { die("An error occurred. Please try again later."); }
+if (!$stmt) {
+    die("An error occurred. Please try again later.");
+}
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -50,10 +59,10 @@ $cab_sql = "SELECT c.booking_id, c.cab_id, c.pickup_location, c.drop_location,
                    c.booking_date, c.return_date, c.booking_status,
                    c.pick_up_time, c.total_price, c.trip_type,
                    a.cab_name, a.seats, a.image, a.image2 as ac_status,
-                   f.rating, f.comments
+                   ag.phone as agency_phone, ag.name as agency_name
             FROM acabookings c
             JOIN acab a ON c.cab_id = a.id
-            LEFT JOIN cab_feedback f ON c.booking_id = f.booking_id
+            JOIN agencies ag ON c.agency_id = ag.id
             WHERE c.user_id = ?
             ORDER BY c.booking_date DESC";
 
@@ -120,52 +129,99 @@ if ($cab_stmt) {
         .premium-card {
             background: white;
             border-radius: 24px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: var(--card-shadow);
             border: 1px solid #E2E8F0;
             display: flex;
-            gap: 30px;
+            flex-direction: column;
+            gap: 15px;
             position: relative;
             overflow: hidden;
             transition: var(--transition);
         }
 
         .premium-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
-        .card-bike-icon {
-            width: 140px;
-            height: 100px;
-            background: var(--primary-light);
-            border-radius: 16px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        .card-bike-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .card-content {
-            flex-grow: 1;
-        }
-
-        .card-top {
+        .card-main-info {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
         }
 
-        .card-top h3 {
+        .bike-model-title {
             font-size: 1.4rem;
-            font-weight: 700;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 5px;
         }
 
+        .booking-dates-row {
+            display: flex;
+            gap: 20px;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .booking-dates-row b {
+            color: var(--text-main);
+        }
+
+        .location-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+        }
+
+        .location-row i {
+            color: var(--primary);
+        }
+
+        .id-warning-banner {
+            margin-top: auto;
+            margin-left: -25px;
+            margin-right: -25px;
+            margin-bottom: -25px;
+
+            border-radius: 0 0 24px 24px;
+
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 8px 15px;
+            font-size: 0.6rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .details-trigger {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-size: 1.1rem;
+        }
+
+        .details-trigger:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Existing Status Pill Styles */
         .status-pill {
             padding: 6px 16px;
             border-radius: 50px;
@@ -175,63 +231,97 @@ if ($cab_stmt) {
             letter-spacing: 0.5px;
         }
 
-        .status-pill[data-status="pending"] { background: #FEF3C7; color: #92400E; }
-        .status-pill[data-status="ongoing"] { background: #DCFCE7; color: #166534; }
-        .status-pill[data-status="completed"] { background: #F1F5F9; color: #475569; }
-        .status-pill[data-status="cancelled"] { background: #FEE2E2; color: #991B1B; }
-
-        .card-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+        .status-pill[data-status="pending"] {
+            background: #FEF3C7;
+            color: #92400E;
         }
 
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            color: var(--text-sub);
+        .status-pill[data-status="ongoing"] {
+            background: #DCFCE7;
+            color: #166534;
         }
 
-        .detail-item i {
-            color: var(--primary);
-            width: 16px;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 1px dashed #E2E8F0;
-        }
-
-        .booking-id-text {
-            font-family: monospace;
+        .status-pill[data-status="completed"] {
             background: #F1F5F9;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
             color: #475569;
         }
 
-        .btn-cancel-trigger {
+        .status-pill[data-status="cancelled"] {
             background: #FEE2E2;
-            color: #EF4444;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: var(--transition);
+            color: #991B1B;
         }
 
-        .btn-cancel-trigger:hover {
-            background: #EF4444;
-            color: white;
+        /* Full Details Modal */
+        #details-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 3500;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #details-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%);
+            width: 90%;
+            max-width: 450px;
+            max-height: 80vh;
+            /* Reduced height */
+            background: white;
+            border-radius: 30px;
+            z-index: 3501;
+            padding: 0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
+            overflow-y: auto;
+            /* Allow scrolling if content is long */
+        }
+
+        #details-container.active {
+            transform: translate(-50%, -50%);
+            display: block;
+        }
+
+        .details-modal-header {
+            position: relative;
+            height: 150px;
+            /* Reduced header height */
+            background: #f1f5f9;
+        }
+
+        .details-modal-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .details-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            color: var(--text-main);
+        }
+
+        .details-body {
+            padding: 25px;
         }
 
         .btn-rate-trigger {
@@ -270,16 +360,59 @@ if ($cab_stmt) {
             color: #0F172A;
         }
 
-        /* Slide-up Container Styles */
+        .details-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-pill {
+            background: #F8FAFC;
+            padding: 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .info-pill span {
+            display: block;
+            color: var(--text-sub);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .info-pill b {
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .agency-contact-section {
+            background: var(--primary-light);
+            padding: 15px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .agency-contact-section i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* Cancellation Modal Styles */
         #cancellation-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
-            z-index: 3000;
+            z-index: 4000;
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -291,38 +424,50 @@ if ($cab_stmt) {
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            max-width: 600px;
-            height: 90vh; /* Little space at top */
+            max-width: 550px;
+            max-height: 75vh;
+            /* Reduced from 85vh */
             background: white;
-            border-radius: 40px 40px 0 0;
-            z-index: 3001;
-            padding: 40px 30px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            border-radius: 30px 30px 0 0;
+            z-index: 4001;
+            padding: 25px;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
             transition: bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         #cancellation-container.active {
             bottom: 0;
         }
 
+        .cancellation-body {
+            flex-grow: 1;
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            z-index: 10;
         }
 
         .modal-header h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
         }
 
         .close-modal {
             background: #F1F5F9;
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -333,8 +478,7 @@ if ($cab_stmt) {
 
         .reason-list {
             list-style: none;
-            flex-grow: 1;
-            overflow-y: auto;
+            margin-top: 10px;
         }
 
         .reason-item {
@@ -356,7 +500,7 @@ if ($cab_stmt) {
             transition: var(--transition);
         }
 
-        .reason-item input[type="radio"]:checked + .reason-label {
+        .reason-item input[type="radio"]:checked+.reason-label {
             border-color: var(--primary);
             background: var(--primary-light);
             color: var(--primary);
@@ -364,7 +508,7 @@ if ($cab_stmt) {
 
         #other-reason-text {
             width: 100%;
-            margin-top: 15px;
+            margin-top: 12px;
             padding: 15px;
             border-radius: 15px;
             border: 2px solid #E2E8F0;
@@ -392,27 +536,27 @@ if ($cab_stmt) {
             top: 100px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 4000;
+            z-index: 5000;
         }
 
         @media (max-width: 768px) {
-            .premium-card {
+            .booking-dates-row {
                 flex-direction: column;
-                gap: 20px;
+                gap: 5px;
+            }
+
+            #cancellation-container {
                 padding: 20px;
+                max-height: 90vh;
             }
 
-            .card-bike-icon {
-                width: 100%;
-                height: 150px;
+            .modal-header h2 {
+                font-size: 1.4rem;
             }
 
-            .card-details {
-                grid-template-columns: 1fr;
-            }
-
-            .card-top h3 {
-                font-size: 1.2rem;
+            .reason-label {
+                padding: 12px 15px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -444,49 +588,69 @@ if ($cab_stmt) {
 
         <!-- ===== BIKE BOOKINGS ===== -->
         <div id="section-bikes" class="bookings-grid">
-            <p style="color:#94A3B8; font-size:0.8rem; margin-bottom:10px;"><i class="fas fa-circle-info" style="margin-right:5px;"></i>While collecting the bike please bring your original PAN card / driving license</p>
             <?php if ($result->num_rows > 0): ?>
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <?php
-                        $current_time = new DateTime();
-                        $start_time   = new DateTime($row['booking_date'] . ' ' . $row['pick_up_time']);
-                        $end_time     = new DateTime($row['return_date']  . ' ' . $row['drop_off_time']);
-                        $display_status = $row['booking_status'];
-                        if ($row['booking_status'] === 'active') {
-                            if ($current_time < $start_time)      $display_status = 'pending';
-                            elseif ($current_time <= $end_time)   $display_status = 'ongoing';
-                            else                                   $display_status = 'completed';
-                        }
+                    $current_time = new DateTime();
+                    $start_time = new DateTime($row['booking_date'] . ' ' . $row['pick_up_time']);
+                    $end_time = new DateTime($row['return_date'] . ' ' . $row['drop_off_time']);
+                    $display_status = $row['booking_status'];
+                    if ($row['booking_status'] === 'active') {
+                        if ($current_time < $start_time)
+                            $display_status = 'pending';
+                        elseif ($current_time <= $end_time)
+                            $display_status = 'ongoing';
+                        else
+                            $display_status = 'completed';
+                    }
                     ?>
                     <div class="premium-card">
-                        <div class="card-bike-icon">
-                            <img src="uploads/<?= htmlspecialchars($row['image']) ?>" alt="<?= htmlspecialchars($row['model']) ?>">
+                        <div class="card-main-info">
+                            <div>
+                                <h3 class="bike-model-title"><?= htmlspecialchars($row['model']) ?></h3>
+                                <div class="booking-dates-row">
+                                    <span>From: <b><?= date('d M Y', strtotime($row['booking_date'])) ?></b></span>
+                                    <span>Return: <b><?= date('d M Y', strtotime($row['return_date'])) ?></b></span>
+                                </div>
+                                <div class="location-row">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span><?= htmlspecialchars($row['address']) ?></span>
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+                                <span class="status-pill"
+                                    data-status="<?= $display_status ?>"><?= ucfirst($display_status) ?></span>
+                                <button class="details-trigger" onclick='openDetailsModal(<?= json_encode([
+                                    "type" => "Bike",
+                                    "title" => $row["model"],
+                                    "image" => "uploads/" . $row["image"],
+                                    "color" => ucfirst($row["color"]),
+                                    "pickup" => $row["address"],
+                                    "from" => date("d M Y, h:i A", strtotime($row["booking_date"] . " " . $row["pick_up_time"])),
+                                    "return" => date("d M Y, h:i A", strtotime($row["return_date"] . " " . $row["drop_off_time"])),
+                                    "id" => $row["booking_id"],
+                                    "status" => $display_status,
+                                    "agency_name" => $row["agency_name"] ?? "UrbanRide Partner",
+                                    "agency_phone" => $row["agency_phone"] ?? "Not Provided"
+                                ]) ?>)'>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="card-content">
-                            <div class="card-top">
-                                <h3><?= htmlspecialchars($row['model']) ?></h3>
-                                <span class="status-pill" data-status="<?= $display_status ?>"><?= ucfirst($display_status) ?></span>
-                            </div>
-                            <div class="card-details">
-                                <div class="detail-item"><i class="fas fa-palette"></i><span>Color: <b><?= ucfirst(htmlspecialchars($row['color'])) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-map-marker-alt"></i><span>Pick Up: <b><?= htmlspecialchars($row['address']) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>From: <b><?= date('d M Y, h:i A', strtotime($row['booking_date'].' '.$row['pick_up_time'])) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-calendar-check"></i><span>Return: <b><?= date('d M Y, h:i A', strtotime($row['return_date'].' '.$row['drop_off_time'])) ?></b></span></div>
-                            </div>
-                            <div class="card-footer">
-                                <span class="booking-id-text">ID: <?= htmlspecialchars($row['booking_id']) ?></span>
-                                <?php if ($display_status === 'pending'): ?>
-                                    <button class="btn-cancel-trigger" onclick="openCancelModal('<?= $row['booking_id'] ?>')">Cancel Bike</button>
-                                <?php endif; ?>
-                            </div>
+                        <div class="id-warning-banner">
+                            <i class="fas fa-circle-info"></i>
+                            While collecting the bike please bring your original PAN card / driving license.
                         </div>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
                 <div class="empty-state" style="padding:80px; text-align:center; background:white; border-radius:24px;">
-                    <i class="fas fa-motorcycle" style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
+                    <i class="fas fa-motorcycle"
+                        style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
                     <p style="font-size:1.2rem; color:var(--text-sub);">No bike bookings yet.</p>
-                    <a href="agencies.php" style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Browse Bikes</a>
+                    <a href="agencies.php"
+                        style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Browse
+                        Bikes</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -496,67 +660,94 @@ if ($cab_stmt) {
             <?php if ($cab_result && $cab_result->num_rows > 0): ?>
                 <?php while ($crow = $cab_result->fetch_assoc()): ?>
                     <?php
-                        $current_time  = new DateTime();
-                        $cstart        = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
-                        $cstatus       = $crow['booking_status'];
-                        if ($cstatus === 'active') {
-                            if ($current_time < $cstart) {
-                                $cstatus = 'pending';
+                    $current_time = new DateTime();
+                    $cstart = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
+                    $cstatus = $crow['booking_status'];
+                    if ($cstatus === 'active') {
+                        if ($current_time < $cstart) {
+                            $cstatus = 'pending';
+                        } else {
+                            $cend = clone $cstart;
+                            $cend->modify('+3 hours'); // Cab rides complete 3 hours after pickup
+                            if ($current_time > $cend) {
+                                $cstatus = 'completed';
                             } else {
-                                $cend = clone $cstart;
-                                $cend->modify('+3 hours'); // Cab rides complete 3 hours after pickup
-                                if ($current_time > $cend) {
-                                    $cstatus = 'completed';
-                                } else {
-                                    $cstatus = 'ongoing';
-                                }
+                                $cstatus = 'ongoing';
                             }
                         }
-                        $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
-                    ?>
-                    <div class="premium-card">
-                        <div class="card-bike-icon" style="background:#EFF6FF;">
-                            <img src="<?= $cab_img ?>" alt="<?= htmlspecialchars($crow['cab_name']) ?>" onerror="this.src='images/home_3.png'">
+                    }
+                    $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
+            ?>
+            <div class="premium-card">
+                <div class="card-main-info">
+                    <div>
+                        <h3 class="bike-model-title"><?= htmlspecialchars($crow['cab_name']) ?></h3>
+                        <div class="booking-dates-row">
+                            <span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?></b></span>
+                            <span>Time: <b><?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span>
                         </div>
-                        <div class="card-content">
-                            <div class="card-top">
-                                <h3><?= htmlspecialchars($crow['cab_name']) ?></h3>
-                                <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
-                            </div>
-                            <div class="card-details">
-                                <div class="detail-item"><i class="fas fa-couch"></i><span>Seats: <b><?= $crow['seats'] ?> Seater</b></span></div>
-                                <div class="detail-item"><i class="fas fa-snowflake"></i><span>AC: <b><?= htmlspecialchars($crow['ac_status'] ?? 'AC') ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-location-dot"></i><span>From: <b><?= htmlspecialchars($crow['pickup_location']) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-flag-checkered"></i><span>To: <b><?= htmlspecialchars($crow['drop_location']) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?> at <?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span></div>
-                                <div class="detail-item"><i class="fas fa-indian-rupee-sign"></i><span>Total: <b>₹<?= number_format($crow['total_price'], 2) ?></b></span></div>
-                            </div>
-                            <div class="card-footer">
-                                <span class="booking-id-text">ID: <?= htmlspecialchars($crow['booking_id']) ?></span>
-                                <?php if ($cstatus === 'pending'): ?>
-                                    <form method="POST" action="Taxi-Booking/cancel_booking.php" style="display:inline;">
-                                        <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
-                                        <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
-                                    </form>
-                                <?php elseif ($cstatus === 'completed'): ?>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <?php if (empty($crow['rating'])): ?>
-                                            <button class="btn-rate-trigger" onclick="showFeedbackModal('<?= $crow['booking_id'] ?>', '<?= $crow['cab_id'] ?>')">Rate Ride</button>
-                                        <?php else: ?>
-                                            <span style="font-size:0.95rem; color:#FFD700; font-weight:700; margin-right: 8px;"><i class="fas fa-star"></i> <?= $crow['rating'] ?>/5</span>
-                                        <?php endif; ?>
-                                        <a href="Taxi-Booking/generate_invoice.php?booking_id=<?= $crow['booking_id'] ?>" class="btn-invoice-trigger" target="_blank"><i class="fas fa-file-pdf"></i> Invoice</a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
+                        <div class="location-row">
+                            <i class="fas fa-location-dot"></i>
+                            <span><?= htmlspecialchars($crow['pickup_location']) ?> →
+                                <?= htmlspecialchars($crow['drop_location']) ?></span>
                         </div>
                     </div>
-                <?php endwhile; ?>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+                        <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
+                        <button class="details-trigger" onclick='openDetailsModal(<?= json_encode([
+                            "type" => "Taxi",
+                            "title" => $crow["cab_name"],
+                            "image" => $cab_img,
+                            "seats" => $crow["seats"] . " Seater",
+                            "ac" => $crow["ac_status"] ?? "AC",
+                            "pickup" => $crow["pickup_location"],
+                            "drop" => $crow["drop_location"],
+                            "from" => date("d M Y, h:i A", strtotime($crow["booking_date"] . " " . $crow["pick_up_time"])),
+                            "id" => $crow["booking_id"],
+                            "price" => "₹" . number_format($crow["total_price"], 2),
+                            "status" => $cstatus,
+                            "agency_name" => $crow["agency_name"] ?? "UrbanRide Partner",
+                            "agency_phone" => $crow["agency_phone"] ?? "Not Provided"
+                        ]) ?>)'>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-details">
+                    <div class="detail-item"><i class="fas fa-couch"></i><span>Seats: <b><?= $crow['seats'] ?> Seater</b></span></div>
+                    <div class="detail-item"><i class="fas fa-snowflake"></i><span>AC: <b><?= htmlspecialchars($crow['ac_status'] ?? 'AC') ?></b></span></div>
+                    <div class="detail-item"><i class="fas fa-location-dot"></i><span>From: <b><?= htmlspecialchars($crow['pickup_location']) ?></b></span></div>
+                    <div class="detail-item"><i class="fas fa-flag-checkered"></i><span>To: <b><?= htmlspecialchars($crow['drop_location']) ?></b></span></div>
+                    <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?> at <?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span></div>
+                    <div class="detail-item"><i class="fas fa-indian-rupee-sign"></i><span>Total: <b>₹<?= number_format($crow['total_price'], 2) ?></b></span></div>
+                </div>
+                <div class="card-footer">
+                    <span class="booking-id-text">ID: <?= htmlspecialchars($crow['booking_id']) ?></span>
+                    <?php if ($cstatus === 'pending'): ?>
+                        <form method="POST" action="Taxi-Booking/cancel_booking.php" style="display:inline;">
+                            <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
+                            <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
+                        </form>
+                    <?php elseif ($cstatus === 'completed'): ?>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <?php if (empty($crow['rating'])): ?>
+                                <button class="btn-rate-trigger" onclick="showFeedbackModal('<?= $crow['booking_id'] ?>', '<?= $crow['cab_id'] ?>')">Rate Ride</button>
+                            <?php else: ?>
+                                <span style="font-size:0.95rem; color:#FFD700; font-weight:700; margin-right: 8px;"><i class="fas fa-star"></i> <?= $crow['rating'] ?>/5</span>
+                            <?php endif; ?>
+                            <a href="Taxi-Booking/generate_invoice.php?booking_id=<?= $crow['booking_id'] ?>" class="btn-invoice-trigger" target="_blank"><i class="fas fa-file-pdf"></i> Invoice</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endwhile; ?>
             <?php else: ?>
                 <div class="empty-state" style="padding:80px; text-align:center; background:white; border-radius:24px;">
                     <i class="fas fa-taxi" style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
                     <p style="font-size:1.2rem; color:var(--text-sub);">No taxi bookings yet.</p>
-                    <a href="Taxi-Booking/taxi-booking.php" style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Book a Cab</a>
+                    <a href="Taxi-Booking/taxi-booking.php"
+                        style="display:inline-block; margin-top:15px; padding:12px 24px; background:var(--primary); color:white; border-radius:50px; font-weight:700; text-decoration:none;">Book
+                        a Cab</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -573,12 +764,12 @@ if ($cab_stmt) {
                 <i class="fas fa-times"></i>
             </div>
         </div>
-        
+
         <p style="color: var(--text-sub); margin-bottom: 20px;">Please tell us why you are cancelling your booking.</p>
-        
+
         <form id="cancelForm" action="backend/new_cancel.php" method="POST">
             <input type="hidden" id="cancel_booking_id" name="booking_id" value="">
-            
+
             <div class="reason-list">
                 <div class="reason-item">
                     <input type="radio" name="reason" id="r1" value="Change of plans" required>
@@ -604,31 +795,82 @@ if ($cab_stmt) {
                     <input type="radio" name="reason" id="other" value="Other">
                     <label for="other" class="reason-label">Other</label>
                 </div>
-                <textarea id="other-reason-text" name="other_reason" placeholder="Please specify your reason..." rows="3"></textarea>
+                <textarea id="other-reason-text" name="other_reason" placeholder="Please specify your reason..."
+                    rows="3"></textarea>
             </div>
-            
+
             <button type="submit" class="btn-confirm-cancel">Confirm Cancellation</button>
         </form>
+    </div>
+
+    <!-- Details Modal Overlay -->
+    <div id="details-overlay" onclick="closeDetailsModal()"></div>
+
+    <!-- Details Container -->
+    <div id="details-container">
+        <div class="details-modal-header">
+            <img id="detail-img" src="" alt="">
+            <div class="details-modal-close" onclick="closeDetailsModal()">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="details-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="detail-title" style="font-size:1.8rem; font-weight:800;"></h2>
+                <span id="detail-status" class="status-pill"></span>
+            </div>
+
+            <div id="detail-id" class="booking-id-text" style="display:inline-block; margin-top:10px;"></div>
+
+            <div class="details-info-grid">
+                <div class="info-pill"><span id="meta1-label">Color</span><b id="meta1-val"></b></div>
+                <div class="info-pill"><span id="meta2-label">Total Price</span><b id="meta2-val"></b></div>
+                <div class="info-pill"><span>From</span><b id="detail-from"></b></div>
+                <div class="info-pill"><span>To / Return</span><b id="detail-to"></b></div>
+            </div>
+
+            <div class="location-row" style="margin-bottom:20px;">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="detail-pickup" style="font-weight:600; color:var(--text-main);"></span>
+            </div>
+
+            <div class="agency-contact-section">
+                <div>
+                    <b id="detail-agency-name" style="font-size:1rem;"></b>
+                </div>
+                <div style="text-align:right;">
+                    <a id="detail-phone-link" href=""
+                        style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+                        <b id="detail-agency-phone"></b>
+                        <i class="fas fa-phone-volume"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div id="modal-footer-action" style="margin-top:25px;">
+                <!-- Cancel button will be injected here if status is pending -->
+            </div>
+        </div>
     </div>
 
     <script>
         // Tab switching
         function switchTab(tab) {
             const bikeSection = document.getElementById('section-bikes');
-            const cabSection  = document.getElementById('section-cabs');
-            const bikeTab     = document.getElementById('tab-bikes');
-            const cabTab      = document.getElementById('tab-cabs');
+            const cabSection = document.getElementById('section-cabs');
+            const bikeTab = document.getElementById('tab-bikes');
+            const cabTab = document.getElementById('tab-cabs');
 
             if (tab === 'bikes') {
                 bikeSection.style.display = 'grid';
-                cabSection.style.display  = 'none';
+                cabSection.style.display = 'none';
                 bikeTab.style.color = 'var(--primary)';
                 bikeTab.style.borderBottomColor = 'var(--primary)';
                 cabTab.style.color = 'var(--text-sub)';
                 cabTab.style.borderBottomColor = 'transparent';
             } else {
                 bikeSection.style.display = 'none';
-                cabSection.style.display  = 'grid';
+                cabSection.style.display = 'grid';
                 cabTab.style.color = 'var(--primary)';
                 cabTab.style.borderBottomColor = 'var(--primary)';
                 bikeTab.style.color = 'var(--text-sub)';
@@ -640,7 +882,9 @@ if ($cab_stmt) {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('tab') === 'cabs') switchTab('cabs');
 
+        // Combined Modal Logic
         function openCancelModal(bookingId) {
+            closeDetailsModal();
             document.getElementById('cancel_booking_id').value = bookingId;
             const overlay = document.getElementById('cancellation-overlay');
             const container = document.getElementById('cancellation-container');
@@ -658,6 +902,74 @@ if ($cab_stmt) {
             overlay.style.opacity = '0';
             container.classList.remove('active');
             setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            document.body.style.overflow = 'auto';
+        }
+
+        function openDetailsModal(data) {
+            document.getElementById('detail-img').src = data.image;
+            document.getElementById('detail-title').innerText = data.title;
+            document.getElementById('detail-id').innerText = "ID: " + data.id;
+
+            const statusPill = document.getElementById('detail-status');
+            statusPill.innerText = data.status.toUpperCase();
+            statusPill.setAttribute('data-status', data.status);
+
+            if (data.type === 'Bike') {
+                document.getElementById('meta1-label').innerText = "Color";
+                document.getElementById('meta1-val').innerText = data.color;
+                document.getElementById('meta2-label').innerText = "Agency";
+                document.getElementById('meta2-val').innerText = data.agency_name;
+                document.getElementById('detail-from').innerText = data.from;
+                document.getElementById('detail-to').innerText = data.return;
+                document.getElementById('detail-pickup').innerText = data.pickup;
+            } else {
+                document.getElementById('meta1-label').innerText = "Seats";
+                document.getElementById('meta1-val').innerText = data.seats;
+                document.getElementById('meta2-label').innerText = "Total Price";
+                document.getElementById('meta2-val').innerText = data.price;
+                document.getElementById('detail-from').innerText = data.from;
+                document.getElementById('detail-to').innerText = data.drop;
+                document.getElementById('detail-pickup').innerText = data.pickup;
+            }
+
+            document.getElementById('detail-agency-name').innerText = data.agency_name;
+            document.getElementById('detail-agency-phone').innerText = data.agency_phone;
+            document.getElementById('detail-phone-link').href = "tel:" + data.agency_phone;
+
+            const footer = document.getElementById('modal-footer-action');
+            footer.innerHTML = "";
+            if (data.status === 'pending') {
+                if (data.type === 'Bike') {
+                    footer.innerHTML = `<button class="btn-confirm-cancel" style="background:#EF4444; box-shadow:none;" onclick="openCancelModal('${data.id}')">Cancel Booking</button>`;
+                } else {
+                    footer.innerHTML = `
+                        <form method="POST" action="Taxi-Booking/cancel_booking.php">
+                            <input type="hidden" name="booking_id" value="${data.id}">
+                            <button type="submit" class="btn-confirm-cancel" style="background:#EF4444; box-shadow:none;" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
+                        </form>`;
+                }
+            }
+
+            const overlay = document.getElementById('details-overlay');
+            const container = document.getElementById('details-container');
+            overlay.style.display = 'block';
+            container.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                container.classList.add('active');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailsModal() {
+            const overlay = document.getElementById('details-overlay');
+            const container = document.getElementById('details-container');
+            overlay.style.opacity = '0';
+            container.classList.remove('active');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                container.style.display = 'none';
+            }, 500);
             document.body.style.overflow = 'auto';
         }
 
