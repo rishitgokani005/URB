@@ -22,7 +22,7 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
             </h2>
             <p style="text-align: center; color: var(--text-sub); margin-bottom: 2rem;">Enter your credentials to continue</p>
             
-            <form action="index.php" method="POST">
+            <form action="<?php echo $base_url; ?>index.php" method="POST">
                 <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
                 <div class="input-group" style="margin-bottom: 1.2rem;">
                     <div style="position: relative;">
@@ -39,8 +39,8 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
                 <button type="submit" class="btn-signup" style="width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.1rem;">Login Now</button>
             </form>
             <div class="modal-footer" style="margin-top: 2rem; text-align: center;">
-                <p style="color: var(--text-sub);">Don't have an account? <a href="register.php" style="color: var(--primary); font-weight: 700;">Join for free</a></p>
-                <a href="request_reset.php" style="display: block; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub);">Forgot Password?</a>
+                <p style="color: var(--text-sub);">Don't have an account? <a href="<?php echo $base_url; ?>register.php" style="color: var(--primary); font-weight: 700;">Join for free</a></p>
+                <a href="<?php echo $base_url; ?>request_reset.php" style="display: block; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub);">Forgot Password?</a>
             </div>
         </div>
     </div>
