@@ -569,11 +569,6 @@ if ($cab_stmt) {
     <?php endif; ?>
 
     <div class="bookings-wrapper">
-        <div class="page-header">
-            <h1 style="font-size:2rem; font-weight:800; margin-bottom:8px;">My Bookings</h1>
-            <p style="color: var(--text-sub);">View and manage all your rides in one place</p>
-        </div>
-
         <!-- Tab Switcher -->
         <div style="display:flex; gap:12px; margin-bottom:30px; border-bottom:2px solid #E2E8F0; padding-bottom:0;">
             <button onclick="switchTab('bikes')" id="tab-bikes"
