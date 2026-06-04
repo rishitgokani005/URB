@@ -5,6 +5,7 @@ include('includes/db.php');
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
+    $redirect_url = isset($_POST['redirect_url']) ? $_POST['redirect_url'] : 'index.php';
 
     $query = "SELECT * FROM users WHERE email='$email'";
     $result = mysqli_query($conn, $query);
@@ -21,16 +22,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($row['role'] === 'admin') {
                 header("Location: admin/dashboard.php");
             } else {
-                $redirect_url = isset($_POST['redirect_url']) ? $_POST['redirect_url'] : 'index.php';
                 header("Location: $redirect_url");
             }
             exit;
         } else {
-            header("Location: index.php?error=incorrect_password");
+            $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
+            header("Location: " . $redirect_url . $separator . "error=incorrect_password");
             exit();
         }
     } else {
-        header("Location: register.php?error=invalid_email");
+        $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
+        header("Location: " . $redirect_url . $separator . "error=invalid_email");
         exit();
     }
 }
@@ -41,18 +43,37 @@ require 'includes/header.php';
 <style>
 /* Dynamic Sliding Search Switcher & Transitions */
 .search-float, .lite-search-compact {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    transition: none !important;
+}
+
+/* Form cards inside switcher containers */
+.search-float .search-form, .lite-search-compact .search-form {
+    padding: 25px;
+    border-radius: 30px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid transparent;
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Orange background when Bike is active */
-.search-float.mode-bike, .lite-search-compact.mode-bike {
-    background: var(--primary) !important;
-    color: white !important;
-    border-color: var(--primary) !important;
+.lite-search-compact .search-form {
+    padding: 25px 30px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+}
+
+/* White background when Bike is active */
+.search-float.mode-bike .search-form, .lite-search-compact.mode-bike .search-form {
+    background: white !important;
+    color: var(--text-main) !important;
+    border-color: var(--border) !important;
 }
 
 /* White background when Cab is active */
-.search-float.mode-cab, .lite-search-compact.mode-cab {
+.search-float.mode-cab .search-form, .lite-search-compact.mode-cab .search-form {
     background: white !important;
     color: var(--text-main) !important;
     border-color: var(--border) !important;
@@ -61,9 +82,17 @@ require 'includes/header.php';
 /* Tab Switcher Wrapper */
 .search-tabs-container {
     display: flex;
-    justify-content: center;
-    margin-bottom: 25px;
+    justify-content: flex-start;
+    margin-bottom: 0 !important;
     width: 100%;
+}
+
+.search-float .search-tabs-container {
+    padding-left: 44px;
+}
+
+.lite-search-compact .search-tabs-container {
+    padding-left: 49px;
 }
 
 .search-tabs {
@@ -128,17 +157,11 @@ require 'includes/header.php';
     color: white;
 }
 
-/* Styling for forms when container background is Orange (mode-bike) */
+/* Styling for forms when container background is White (mode-bike and mode-cab) */
 .search-float.mode-bike select,
 .search-float.mode-bike input,
 .lite-search-compact.mode-bike select,
-.lite-search-compact.mode-bike input {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
-}
-
-/* Styling for forms when container background is White (mode-cab) */
+.lite-search-compact.mode-bike input,
 .search-float.mode-cab select,
 .search-float.mode-cab input,
 .lite-search-compact.mode-cab select,
@@ -148,64 +171,76 @@ require 'includes/header.php';
     color: var(--text-main) !important;
 }
 
+.search-float.mode-bike .search-item label,
+.lite-search-compact.mode-bike .search-item label,
 .search-float.mode-cab .search-item label,
 .lite-search-compact.mode-cab .search-item label {
     color: var(--text-sub) !important;
 }
 
 .search-float.mode-bike select option,
-.lite-search-compact.mode-bike select option {
-    background-color: var(--primary);
-    color: white;
+.lite-search-compact.mode-bike select option,
+.search-float.mode-cab select option,
+.lite-search-compact.mode-cab select option {
+    background-color: white;
+    color: var(--text-main);
 }
 
 .search-float.mode-bike select:focus,
 .search-float.mode-bike input:focus,
 .lite-search-compact.mode-bike select:focus,
-.lite-search-compact.mode-bike input:focus {
-    border-color: white !important;
-    background-color: rgba(255, 255, 255, 0.25) !important;
-}
-
-.search-float.mode-bike .search-item label,
-.lite-search-compact.mode-bike .search-item label {
-    color: rgba(255, 255, 255, 0.85) !important;
+.lite-search-compact.mode-bike input:focus,
+.search-float.mode-cab select:focus,
+.search-float.mode-cab input:focus,
+.lite-search-compact.mode-cab select:focus,
+.lite-search-compact.mode-cab input:focus {
+    border-color: var(--primary) !important;
+    background-color: white !important;
 }
 
 .search-float.mode-bike .search-go,
 .lite-search-compact.mode-bike .search-go {
-    background: white !important;
-    color: var(--primary) !important;
+    background: var(--primary) !important;
+    color: white !important;
 }
 
 .search-float.mode-bike .search-go:hover,
 .lite-search-compact.mode-bike .search-go:hover {
-    background: #FFF0EB !important;
+    background: #e04400 !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 15px rgba(255, 77, 1, 0.3) !important;
 }
 
-/* Blending Switcher when container is Orange (mode-bike) */
+/* Blending Switcher when container is Orange (mode-bike and mode-cab) */
 .search-float.mode-bike .search-tabs,
-.lite-search-compact.mode-bike .search-tabs {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
+.lite-search-compact.mode-bike .search-tabs,
+.search-float.mode-cab .search-tabs,
+.lite-search-compact.mode-cab .search-tabs {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
 .search-float.mode-bike .tab-btn,
-.lite-search-compact.mode-bike .tab-btn {
-    color: rgba(255, 255, 255, 0.85);
+.lite-search-compact.mode-bike .tab-btn,
+.search-float.mode-cab .tab-btn,
+.lite-search-compact.mode-cab .tab-btn {
+    color: white !important;
 }
 
 .search-float.mode-bike .tab-btn.active,
-.lite-search-compact.mode-bike .tab-btn.active {
-    color: var(--primary);
+.lite-search-compact.mode-bike .tab-btn.active,
+.search-float.mode-cab .tab-btn.active,
+.lite-search-compact.mode-cab .tab-btn.active {
+    color: var(--primary) !important;
 }
 
 .search-float.mode-bike .tab-slider,
-.lite-search-compact.mode-bike .tab-slider {
-    background: white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+.lite-search-compact.mode-bike .tab-slider,
+.search-float.mode-cab .tab-slider,
+.lite-search-compact.mode-cab .tab-slider {
+    background: white !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Cab Form Row 1 & 2 styles (matches taxi-booking.php exactly) */
@@ -373,7 +408,9 @@ require 'includes/header.php';
     box-shadow: 0 8px 16px rgba(255, 77, 1, 0.3) !important;
 }
 
-/* Custom dropdown and pickers in Cab mode */
+/* Custom dropdown and pickers in Bike & Cab modes */
+.search-float.mode-bike select,
+.lite-search-compact.mode-bike select,
 .search-float.mode-cab select,
 .lite-search-compact.mode-cab select {
     -webkit-appearance: none !important;
@@ -385,6 +422,8 @@ require 'includes/header.php';
     padding-right: 40px !important;
 }
 
+.search-float.mode-bike input[type="date"],
+.lite-search-compact.mode-bike input[type="date"],
 .search-float.mode-cab input[type="date"],
 .lite-search-compact.mode-cab input[type="date"] {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E") !important;
@@ -394,30 +433,11 @@ require 'includes/header.php';
     padding-right: 40px !important;
 }
 
+.search-float.mode-bike input[type="time"],
+.lite-search-compact.mode-bike input[type="time"],
 .search-float.mode-cab input[type="time"],
 .lite-search-compact.mode-cab input[type="time"] {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 15px center !important;
-    background-size: 16px !important;
-    padding-right: 40px !important;
-}
-
-/* Custom pickers in Bike mode */
-.search-float.mode-bike select,
-.lite-search-compact.mode-bike select {
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 15px center !important;
-    background-size: 14px !important;
-    padding-right: 40px !important;
-}
-
-.search-float.mode-bike input[type="date"],
-.lite-search-compact.mode-bike input[type="date"] {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E") !important;
     background-repeat: no-repeat !important;
     background-position: right 15px center !important;
     background-size: 16px !important;
@@ -554,7 +574,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     </form>
 
     <!-- Cab Form -->
-    <form action="Taxi-Booking/taxi-booking.php" method="GET" onsubmit="return validateCabDates('top')" id="top-cab-form" class="search-form cab-form" style="display: none;">
+    <form action="Taxi-Booking/agencies-cab.php" method="GET" onsubmit="return validateCabDates('top')" id="top-cab-form" class="search-form cab-form" style="display: none;">
         <input type="hidden" name="search_submitted" value="1">
         
         <!-- Row 1: Trip configuration -->
@@ -858,7 +878,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         </form>
 
         <!-- Cab Form -->
-        <form action="Taxi-Booking/taxi-booking.php" method="GET" onsubmit="return validateCabDates('bottom')" id="bottom-cab-form" class="search-form cab-form" style="display: none;">
+        <form action="Taxi-Booking/agencies-cab.php" method="GET" onsubmit="return validateCabDates('bottom')" id="bottom-cab-form" class="search-form cab-form" style="display: none;">
             <input type="hidden" name="search_submitted" value="1">
             
             <!-- Row 1: Trip configuration -->

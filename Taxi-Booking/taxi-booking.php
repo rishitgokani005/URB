@@ -38,8 +38,29 @@ if (!$db_connection_error) {
     $pickup_time = isset($_GET['pickup_time']) ? $_GET['pickup_time'] : '';
     $est_distance = isset($_GET['est_distance']) ? intval($_GET['est_distance']) : 100;
 
+    $selected_agency_id = isset($_GET['agency_id']) ? mysqli_real_escape_string($conn, $_GET['agency_id']) : '';
+    $agency = null;
+    $happy_customers = 0;
+    if ($selected_agency_id) {
+        $agency_info_query = "SELECT * FROM agencies WHERE id = '$selected_agency_id'";
+        $agency_res = $conn->query($agency_info_query);
+        if ($agency_res && $agency_res->num_rows > 0) {
+            $agency = $agency_res->fetch_assoc();
+            
+            // Query total bookings for happy customers count of this agency
+            $booking_count_query = "SELECT COUNT(*) as total_bookings FROM acabookings WHERE agency_id = '$selected_agency_id'";
+            $booking_count_res = $conn->query($booking_count_query);
+            if ($booking_count_res) {
+                $happy_customers = $booking_count_res->fetch_assoc()['total_bookings'] ?? 0;
+            }
+        }
+    }
+
     if ($search_city) {
         $cabs_query = "SELECT * FROM acab WHERE city = '$search_city'";
+        if ($selected_agency_id) {
+            $cabs_query .= " AND agency_id = '$selected_agency_id'";
+        }
         $cabs_result = $conn->query($cabs_query);
     }
 }
@@ -897,6 +918,104 @@ if (!$db_connection_error) {
             grid-template-columns: 1fr !important;
         }
     }
+
+    /* Agency Profile Banner Styles */
+    .agency-profile-banner {
+        width: 80%;
+        max-width: 1000px;
+        aspect-ratio: 8 / 1;
+        margin: -3rem auto 3rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0 60px;
+        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.4);
+        overflow: hidden;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .agency-profile-banner::before {
+        content: "";
+        position: absolute;
+        top: -150%;
+        left: -50%;
+        width: 70%;
+        height: 400%;
+        background: linear-gradient(90deg, transparent, rgba(36, 34, 34, 0.15), transparent);
+        transform: rotate(25deg);
+        animation: glassShine 6s linear infinite;
+    }
+
+    @keyframes glassShine {
+        from { left: -120%; }
+        to { left: 220%; }
+    }
+
+    .agency-info-main {
+        position: relative;
+        z-index: 2;
+        text-align: left;
+    }
+
+    .agency-info-main h1 {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.1;
+    }
+
+    .agency-meta {
+        margin-top: 14px;
+        font-size: 1.1rem;
+        color: #555;
+        font-weight: 500;
+        display: block;
+    }
+
+    /* Tablet */
+    @media (max-width: 768px) {
+        .agency-profile-banner {
+            width: 90%;
+            padding: 0 30px;
+            aspect-ratio: auto;
+            min-height: 220px;
+            margin: 0 auto 2rem;
+        }
+
+        .agency-info-main h1 {
+            font-size: 2.2rem;
+        }
+
+        .agency-meta {
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+    }
+
+    /* Mobile */
+    @media (max-width: 576px) {
+        .agency-profile-banner {
+            width: 100%;
+            padding: 15px;
+            min-height: 120px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .agency-info-main h1 {
+            font-size: 1.8rem;
+        }
+
+        .agency-meta {
+            font-size: 0.9rem;
+        }
+    }
 </style>
 
 <!-- DB Connection Error Alert Banner -->
@@ -910,6 +1029,18 @@ if (!$db_connection_error) {
     </div>
 <?php endif; ?>
 
+<?php if ($agency): ?>
+    <!-- Hidden search criteria to prevent JS error when search form is hidden -->
+    <input type="hidden" id="search_pickup_location" value="<?php echo htmlspecialchars($pickup_location); ?>">
+    <input type="hidden" id="search_drop_location" value="<?php echo htmlspecialchars($drop_location); ?>">
+    <input type="hidden" id="trip_type" value="<?php echo htmlspecialchars($trip_type); ?>">
+    <input type="hidden" id="pickup_date" value="<?php echo htmlspecialchars($pickup_date); ?>">
+    <input type="hidden" id="pickup_time" value="<?php echo htmlspecialchars($pickup_time); ?>">
+    <input type="hidden" id="return_date" value="<?php echo htmlspecialchars($return_date); ?>">
+    <input type="hidden" id="est_distance" value="<?php echo htmlspecialchars($est_distance); ?>">
+<?php endif; ?>
+
+<?php if (!$agency): ?>
 <!-- Hero Section mirroring index.php layout -->
 <section class="taxi-hero">
     <div class="hero-overlay"></div>
@@ -921,7 +1052,7 @@ if (!$db_connection_error) {
 
 <!-- Search form section mirroring index.php floating bar -->
 <div id="search-section" class="search-float-taxi reveal">
-    <form action="taxi-booking.php" method="GET" onsubmit="return validateSearchForm();">
+    <form action="agencies-cab.php" method="GET" onsubmit="return validateSearchForm();">
         <input type="hidden" name="search_submitted" value="1">
         
         <!-- Row 1: Trip configuration -->
@@ -996,15 +1127,33 @@ if (!$db_connection_error) {
         </div>
     </form>
 </div>
+<?php endif; ?>
 
 <!-- Main Results & Cabs Grid -->
-<section class="results-section" id="results-section">
+<section class="results-section" id="results-section" style="<?php echo $agency ? 'padding-top: 140px;' : ''; ?>">
     <?php if ($search_city): ?>
-        <div class="section-title reveal" style="margin-bottom: 25px; text-align: left;">
-            <span class="sub-heading">Available Taxis in <?php echo htmlspecialchars($search_city); ?></span>
-            <h2>Select From Our Fleet</h2>
-            <p style="color: var(--text-sub); margin-top: 5px;">Estimated Distance: <span style="color: var(--primary); font-weight:700;"><?php echo $est_distance; ?> km</span> (Change slider above to adjust fare calculations)</p>
-        </div>
+        <?php if ($agency): ?>
+            <div class="agency-profile-banner reveal">
+                <div class="agency-info-main">
+                    <h1><?php echo htmlspecialchars($agency['name']); ?></h1>
+                    <div class="agency-meta">
+                        <?php echo htmlspecialchars($agency['city']); ?>
+                        |
+                        <?php echo $cabs_result ? $cabs_result->num_rows : 0; ?> Vehicles Available
+                        |
+                        <?php echo $happy_customers; ?> Happy Customers
+                        |
+                        Verified Partner
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="section-title reveal" style="margin-bottom: 25px; text-align: left;">
+                <span class="sub-heading">Available Taxis in <?php echo htmlspecialchars($search_city); ?></span>
+                <h2>Select From Our Fleet</h2>
+                <p style="color: var(--text-sub); margin-top: 5px;">Estimated Distance: <span style="color: var(--primary); font-weight:700;"><?php echo $est_distance; ?> km</span> (Change slider above to adjust fare calculations)</p>
+            </div>
+        <?php endif; ?>
 
         <!-- Dynamic Filter Toolbar -->
         <div class="filter-bar reveal">

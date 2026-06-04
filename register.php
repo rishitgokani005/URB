@@ -2,6 +2,8 @@
 session_start();
 include('includes/db.php');
 
+$redirect_url = isset($_GET['redirect_url']) ? $_GET['redirect_url'] : (isset($_POST['redirect_url']) ? $_POST['redirect_url'] : 'index.php');
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = mysqli_real_escape_string($conn, $_POST['name']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
@@ -23,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['user_id'] = mysqli_insert_id($conn);
             $_SESSION['user_role'] = 'user';
             session_write_close();
-            header('Location: index.php');
+            header('Location: ' . $redirect_url);
             exit();
         } else {
             $error = "Registration failed: " . mysqli_error($conn);
@@ -48,6 +50,7 @@ require 'includes/header.php';
         <?php endif; ?>
 
         <form action="register.php" method="POST" id="registerForm">
+            <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($redirect_url); ?>">
             <div class="input-group" style="margin-bottom: 1.2rem;">
                 <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">Full Name</label>
                 <input type="text" name="name" required placeholder="Enter your full name" style="width: 100%; padding: 12px 15px; border-radius: 12px; border: 1.5px solid #E2E8F0; outline: none; font-size: 0.95rem;">

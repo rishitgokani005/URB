@@ -4,7 +4,7 @@ require 'includes/header.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: login.php?redirect_url=" . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
 

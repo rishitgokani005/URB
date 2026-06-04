@@ -68,8 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Cab booking successful! Ride ID: $booking_id";
-            // Redirect back to user bookings page
-            header("Location: ../bookings.php");
+            // Display alert popup and redirect to homepage
+            echo "<script>
+                alert('booked taxi');
+                window.location.href = '../index.php';
+            </script>";
             exit;
         } else {
             $_SESSION['message'] = "Booking execution error: " . $stmt->error;

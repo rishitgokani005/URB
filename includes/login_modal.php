@@ -1,6 +1,7 @@
 <?php
 // login_modal.php - Modern Light Login Modal
 $is_compulsory = isset($compulsory_login) && $compulsory_login;
+$login_error = isset($_GET['error']) ? $_GET['error'] : '';
 ?>
 
 <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; z-index: 3000; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px);">
@@ -22,7 +23,19 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
             </h2>
             <p style="text-align: center; color: var(--text-sub); margin-bottom: 2rem;">Enter your credentials to continue</p>
             
-            <form action="index.php" method="POST">
+            <?php if ($login_error): ?>
+                <div class="login-error-message" style="background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #FEE2E2; text-align: center; font-weight: 500;">
+                    <?php
+                    if ($login_error === 'incorrect_password') {
+                        echo "Incorrect password. Please try again.";
+                    } elseif ($login_error === 'invalid_email') {
+                        echo "No account found with this email. Please register or check your email.";
+                    }
+                    ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="<?php echo $base_url; ?>index.php" method="POST">
                 <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
                 <div class="input-group" style="margin-bottom: 1.2rem;">
                     <div style="position: relative;">
@@ -39,8 +52,8 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
                 <button type="submit" class="btn-signup" style="width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.1rem;">Login Now</button>
             </form>
             <div class="modal-footer" style="margin-top: 2rem; text-align: center;">
-                <p style="color: var(--text-sub);">Don't have an account? <a href="register.php" style="color: var(--primary); font-weight: 700;">Join for free</a></p>
-                <a href="request_reset.php" style="display: block; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub);">Forgot Password?</a>
+                <p style="color: var(--text-sub);">Don't have an account? <a href="<?php echo $base_url; ?>register.php?redirect_url=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>" style="color: var(--primary); font-weight: 700;">Join for free</a></p>
+                <a href="<?php echo $base_url; ?>request_reset.php" style="display: block; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub);">Forgot Password?</a>
             </div>
         </div>
     </div>
@@ -68,5 +81,10 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
         if (event.target == loginModal && !<?php echo json_encode($is_compulsory); ?>) {
             hideLoginModal();
         }
+    }
+
+    // Auto-show modal if there's an error
+    if (<?php echo json_encode(!empty($login_error)); ?>) {
+        showLoginModal();
     }
 </script>
