@@ -1669,6 +1669,4 @@ $is_logged_in = isset($_SESSION['loggedin']);
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 
-<?php endif; ?>
-
 <?php require '../includes/footer.php'; ?>
