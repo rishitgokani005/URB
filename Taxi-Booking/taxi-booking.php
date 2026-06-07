@@ -64,6 +64,8 @@ if (!$db_connection_error) {
         $cabs_result = $conn->query($cabs_query);
     }
 }
+
+$is_logged_in = isset($_SESSION['loggedin']);
 ?>
 
 <!-- Custom CSS for self-contained rich styling matching index.php -->
@@ -1666,5 +1668,7 @@ if (!$db_connection_error) {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+
+<?php endif; ?>
 
 <?php require '../includes/footer.php'; ?>

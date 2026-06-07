@@ -771,6 +771,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         </div>
 </section>
 
+<style>
+@keyframes floatCab {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+}
+</style>
 <!-- Lite Search Section (GOOO!! Section with Sliding Switcher) -->
 <section class="lite-search reveal" style="padding: 100px 7% 60px; background: var(--bg-sub);">
     <div class="section-title">
