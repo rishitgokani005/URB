@@ -30,6 +30,8 @@ $pickup_location = $bike_data['address'] ?? '';
 
 $paymentMethod = "Cash";
 $booking_status = "active";
+$is_pickup = $_SESSION['is_pickup'] ?? 0;
+$pickup_address = $_SESSION['pickup_address'] ?? '';
 
 // If we have a pending lock, update it. Otherwise insert (fallback).
 if (isset($_SESSION['pending_booking_id'])) {
@@ -38,15 +40,15 @@ if (isset($_SESSION['pending_booking_id'])) {
             user_id = ?, bike_id = ?, pickup_location = ?, agency_id = ?, 
             booking_date = ?, return_date = ?, total_price = ?, name = ?, 
             idProof = ?, mobile = ?, pick_up_time = ?, drop_off_time = ?, 
-            paymentMethod = ?, booking_status = ? 
+            paymentMethod = ?, booking_status = ?, is_pickup = ?, pickup_address = ?
             WHERE sr_no = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isssssdsssssssi", $user_id, $bike_id, $pickup_location, $agency_id, $booking_date, $return_date, $total_price, $name, $idProof, $mobile, $pick_up_time, $drop_off_time, $paymentMethod, $booking_status, $sr_no);
+    $stmt->bind_param("isssssdsssssssisi", $user_id, $bike_id, $pickup_location, $agency_id, $booking_date, $return_date, $total_price, $name, $idProof, $mobile, $pick_up_time, $drop_off_time, $paymentMethod, $booking_status, $is_pickup, $pickup_address, $sr_no);
 } else {
-    $sql = "INSERT INTO abookings (user_id, bike_id, pickup_location, agency_id, booking_date, return_date, total_price, name, idProof, mobile, pick_up_time, drop_off_time, paymentMethod, booking_status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO abookings (user_id, bike_id, pickup_location, agency_id, booking_date, return_date, total_price, name, idProof, mobile, pick_up_time, drop_off_time, paymentMethod, booking_status, is_pickup, pickup_address) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isssssdsssssss", $user_id, $bike_id, $pickup_location, $agency_id, $booking_date, $return_date, $total_price, $name, $idProof, $mobile, $pick_up_time, $drop_off_time, $paymentMethod, $booking_status);
+    $stmt->bind_param("isssssdsssssssisi", $user_id, $bike_id, $pickup_location, $agency_id, $booking_date, $return_date, $total_price, $name, $idProof, $mobile, $pick_up_time, $drop_off_time, $paymentMethod, $booking_status, $is_pickup, $pickup_address);
 }
 
 

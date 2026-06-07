@@ -39,12 +39,13 @@ $user_id = $_SESSION['user_id'];
 // Fetch user BIKE bookings
 $sql = "SELECT a.booking_id, b.model, b.color, b.address, b.image,
                a.booking_date, a.return_date, a.booking_status,
-               a.pick_up_time, a.drop_off_time, ag.phone as agency_phone, ag.name as agency_name
+               a.pick_up_time, a.drop_off_time, ag.phone as agency_phone, ag.name as agency_name,
+               a.is_pickup, a.pickup_address
         FROM abookings a
         JOIN abike b ON a.bike_id = b.id
         LEFT JOIN agencies ag ON b.agency_id = ag.id
         WHERE a.user_id = ?
-        ORDER BY a.booking_date DESC, a.pick_up_time DESC";
+        ORDER BY a.booking_id DESC";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -609,7 +610,11 @@ if ($cab_stmt) {
                                 </div>
                                 <div class="location-row">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    <span><?= htmlspecialchars($row['address']) ?></span>
+                                    <?php if ($row['is_pickup']): ?>
+                                        <span style="color: var(--primary); font-weight: 600;">Pick-up: <?= htmlspecialchars($row['pickup_address']) ?></span>
+                                    <?php else: ?>
+                                        <span><?= htmlspecialchars($row['address']) ?></span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
@@ -620,7 +625,7 @@ if ($cab_stmt) {
                                     "title" => $row["model"],
                                     "image" => "uploads/" . $row["image"],
                                     "color" => ucfirst($row["color"]),
-                                    "pickup" => $row["address"],
+                                    "pickup" => $row["is_pickup"] ? ("Pick-up: " . $row["pickup_address"]) : $row["address"],
                                     "from" => date("d M Y, h:i A", strtotime($row["booking_date"] . " " . $row["pick_up_time"])),
                                     "return" => date("d M Y, h:i A", strtotime($row["return_date"] . " " . $row["drop_off_time"])),
                                     "id" => $row["booking_id"],

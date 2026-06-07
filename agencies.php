@@ -23,7 +23,7 @@ $_SESSION['booking_start'] = $start_date;
 $_SESSION['booking_end'] = $end_date;
 $_SESSION['booking_city'] = $city;
 
-$query = "SELECT a.id, a.name, a.city, 
+$query = "SELECT a.id, a.name, a.city, a.has_pickup, 
           MIN(b.price_per_day) as min_price, 
           GROUP_CONCAT(DISTINCT b.model SEPARATOR ', ') as bike_variety 
           FROM agencies a
@@ -34,6 +34,120 @@ $result = $conn->query($query);
 ?>
 
 <link rel="stylesheet" href="css/style.css">
+<style>
+/* Agency card: stretch to fill, push badge to bottom */
+.agency-card {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    transition: 0.4s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding-bottom: 0 !important;
+    --card-padding: 30px;
+}
+
+.agency-card h2 {
+    font-size: 1.6rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.agency-card .price-range {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+/* Remove bottom margin/padding from the inner wrapper div */
+.agency-card > div:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Pick-up badge flush to bottom, full width */
+.pickup-badge {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--primary-light);
+    padding: 6px 10px;
+    border-radius: 0;
+    margin-top: 24px;
+    margin-bottom: 0;
+    width: calc(100% + var(--card-padding) * 2);
+    margin-left: calc(-1 * var(--card-padding));
+
+    /* Glass effect */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Shine sweep */
+.pickup-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.45) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    border-radius: inherit;
+    pointer-events: none;
+    animation: badge-shine 3s ease-in-out infinite;
+}
+
+@keyframes badge-shine {
+    0%   { left: -60%; }
+    40%  { left: 110%; }
+    100% { left: 110%; }
+}
+
+@media (max-width: 768px) {
+    .agency-card {
+        --card-padding: 30px; /* keep same unless you reduce padding on mobile */
+    }
+
+    .pickup-badge {
+        font-size: 0.7rem;
+        padding: 5px 8px;
+        margin-top: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .agency-card {
+        --card-padding: 30px; /* keep same unless you reduce padding on mobile */
+    }
+
+    .pickup-badge {
+        font-size: 0.68rem;
+        padding: 5px 6px;
+        gap: 4px;
+    }
+}
+</style>
 
 <section class="agency-section" style="background: var(--bg-sub); min-height: 90vh; padding: 120px 7% 80px;">
     <div class="section-title reveal">
@@ -41,8 +155,9 @@ $result = $conn->query($query);
         <h2>Choose Your Rental Partner</h2>
         <?php if ($start_date && $end_date): ?>
             <p style="margin-top: 10px; color: var(--text-sub);">
-    <i class="fas fa-calendar-days"
-    style="margin-right:8px;color:var(--primary);"></i>Book from <?php echo date('D, j M', strtotime($start_date)); ?> to <?php echo date('D, j M', strtotime($end_date)); ?></p>
+                <i class="fas fa-calendar-days" style="margin-right:8px;color:var(--primary);"></i>
+                Book from <?php echo date('D, j M', strtotime($start_date)); ?> to <?php echo date('D, j M', strtotime($end_date)); ?>
+            </p>
         <?php endif; ?>
     </div>
 
@@ -67,7 +182,14 @@ $result = $conn->query($query);
                             ?>
                         </div>
                     </div>
-                    <a href="agency-bikes.php?agency_id=<?php echo urlencode($row['id']); ?>" class="btn-signup" style="text-align: center; border-radius: 15px; font-size: 0.95rem;">Select This Agency</a>
+                    <div>
+                        <a href="agency-bikes.php?agency_id=<?php echo urlencode($row['id']); ?>" class="btn-signup" style="text-align: center; border-radius: 15px; font-size: 0.95rem; width: 100%; display: block; margin-bottom: 8px;">Select This Agency</a>
+                        <?php if ($row['has_pickup']): ?>
+                            <div class="pickup-badge">
+                                <i class="fas fa-location-dot"></i> Pick-up Service Available
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             <?php endwhile; ?>
 

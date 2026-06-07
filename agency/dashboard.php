@@ -46,6 +46,18 @@ $total_cab_books= $conn->query("SELECT COUNT(*) FROM acabookings WHERE agency_id
             <h4>Active Rides</h4>
             <b><?php echo $conn->query("SELECT COUNT(*) FROM abookings WHERE agency_id = '$agency_id' AND booking_status = 'active'")->fetch_row()[0]; ?></b>
         </div>
+    <?php
+    $agency_info = $conn->query("SELECT has_pickup FROM agencies WHERE id = '$agency_id'")->fetch_assoc();
+    $pickup_status = ($agency_info['has_pickup'] ?? 0) ? 'Available' : 'Disabled';
+    $pickup_color = ($agency_info['has_pickup'] ?? 0) ? '#16A34A' : '#EF4444';
+    $pickup_bg = ($agency_info['has_pickup'] ?? 0) ? '#F0FDF4' : '#FEF2F2';
+    ?>
+    <div class="stat-card" style="background: <?php echo $pickup_bg; ?>; border-color: <?php echo $pickup_color; ?>33;">
+        <div class="stat-icon" style="background: white; color: <?php echo $pickup_color; ?>;"><i class="fas fa-truck-fast"></i></div>
+        <div class="stat-info">
+            <h4>Pick-up Service</h4>
+            <b style="color: <?php echo $pickup_color; ?>;"><?php echo $pickup_status; ?></b>
+        </div>
     </div>
 </div>
 
