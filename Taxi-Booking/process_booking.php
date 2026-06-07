@@ -46,22 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Generate unique booking id
     $booking_id = 'CAB' . time();
+    $est_distance = isset($_POST['est_distance']) ? intval($_POST['est_distance']) : 100;
 
     // Prepare SQL Insert statement
     $sql = "INSERT INTO acabookings (
                 booking_id, user_id, cab_id, agency_id, 
-                pickup_location, drop_location, trip_type, 
+                pickup_location, drop_location, trip_type, est_distance,
                 booking_date, return_date, pick_up_time, 
                 total_price, name, idProof, mobile, email, 
                 paymentMethod, booking_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Cash', 'active')";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Cash', 'active')";
 
     $stmt = $conn->prepare($sql);
     if ($stmt) {
         $stmt->bind_param(
-            "sissssssssdssss", 
+            "sissssissssdssss", 
             $booking_id, $user_id, $cab_id, $agency_id,
-            $pickup_location, $drop_location, $trip_type,
+            $pickup_location, $drop_location, $trip_type, $est_distance,
             $booking_date, $return_date, $pick_up_time,
             $total_price, $passenger_name, $id_proof, $passenger_phone, $passenger_email
         );

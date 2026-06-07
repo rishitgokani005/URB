@@ -39,6 +39,8 @@ if (isset($_SESSION['pending_booking_id'])) {
     <?php
     if (!isset($_SESSION['loggedin'])) {
         include_once __DIR__ . '/login_modal.php';
+    } else {
+        include_once __DIR__ . '/feedback_modal.php';
     }
     ?>
     <header id="main-header">

@@ -49,9 +49,11 @@ $result = $stmt->get_result();
 $cab_sql = "SELECT c.booking_id, c.cab_id, c.pickup_location, c.drop_location,
                    c.booking_date, c.return_date, c.booking_status,
                    c.pick_up_time, c.total_price, c.trip_type,
-                   a.cab_name, a.seats, a.image, a.image2 as ac_status
+                   a.cab_name, a.seats, a.image, a.image2 as ac_status,
+                   f.rating, f.comments
             FROM acabookings c
             JOIN acab a ON c.cab_id = a.id
+            LEFT JOIN cab_feedback f ON c.booking_id = f.booking_id
             WHERE c.user_id = ?
             ORDER BY c.booking_date DESC";
 
@@ -230,6 +232,42 @@ if ($cab_stmt) {
         .btn-cancel-trigger:hover {
             background: #EF4444;
             color: white;
+        }
+
+        .btn-rate-trigger {
+            background: #FFEDE5;
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-rate-trigger:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-invoice-trigger {
+            background: #F1F5F9;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: var(--transition);
+        }
+
+        .btn-invoice-trigger:hover {
+            background: #E2E8F0;
+            color: #0F172A;
         }
 
         /* Slide-up Container Styles */
@@ -462,8 +500,17 @@ if ($cab_stmt) {
                         $cstart        = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
                         $cstatus       = $crow['booking_status'];
                         if ($cstatus === 'active') {
-                            if ($current_time < $cstart) $cstatus = 'pending';
-                            else $cstatus = 'ongoing';
+                            if ($current_time < $cstart) {
+                                $cstatus = 'pending';
+                            } else {
+                                $cend = clone $cstart;
+                                $cend->modify('+3 hours'); // Cab rides complete 3 hours after pickup
+                                if ($current_time > $cend) {
+                                    $cstatus = 'completed';
+                                } else {
+                                    $cstatus = 'ongoing';
+                                }
+                            }
                         }
                         $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
                     ?>
@@ -491,6 +538,15 @@ if ($cab_stmt) {
                                         <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
                                         <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
                                     </form>
+                                <?php elseif ($cstatus === 'completed'): ?>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <?php if (empty($crow['rating'])): ?>
+                                            <button class="btn-rate-trigger" onclick="showFeedbackModal('<?= $crow['booking_id'] ?>', '<?= $crow['cab_id'] ?>')">Rate Ride</button>
+                                        <?php else: ?>
+                                            <span style="font-size:0.95rem; color:#FFD700; font-weight:700; margin-right: 8px;"><i class="fas fa-star"></i> <?= $crow['rating'] ?>/5</span>
+                                        <?php endif; ?>
+                                        <a href="Taxi-Booking/generate_invoice.php?booking_id=<?= $crow['booking_id'] ?>" class="btn-invoice-trigger" target="_blank"><i class="fas fa-file-pdf"></i> Invoice</a>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>

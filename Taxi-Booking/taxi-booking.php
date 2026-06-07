@@ -1018,6 +1018,15 @@ if (!$db_connection_error) {
     }
 </style>
 
+<!-- Session Message Alert -->
+<?php if (isset($_SESSION['message'])): ?>
+    <div class="reveal" style="max-width: 1140px; margin: 120px auto 20px; padding: 15px 25px; background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 20px; text-align: center; color: #166534; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1rem; box-shadow: var(--shadow-md);">
+        <i class="fas fa-check-circle" style="color: #22C55E; margin-right: 8px;"></i>
+        <?php echo htmlspecialchars($_SESSION['message']); ?>
+    </div>
+    <?php unset($_SESSION['message']); ?>
+<?php endif; ?>
+
 <!-- DB Connection Error Alert Banner -->
 <?php if ($db_connection_error): ?>
     <div class="reveal" style="max-width: 1140px; margin: 120px auto 0; padding: 25px; background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: 20px; text-align: center; color: #991B1B; font-family: 'Outfit', sans-serif;">
@@ -1261,9 +1270,11 @@ if (!$db_connection_error) {
 <?php if (isset($_SESSION['user_id']) && !$db_connection_error): 
     // Fetch user cab bookings
     $uid = $_SESSION['user_id'];
-    $my_bookings_query = "SELECT cb.*, c.cab_name, c.image, c.price_per_km, c.agency_name 
+    $my_bookings_query = "SELECT cb.*, c.cab_name, c.image, c.price_per_km, c.agency_name,
+                                 f.rating, f.comments
                           FROM acabookings cb 
                           LEFT JOIN acab c ON cb.cab_id = c.id 
+                          LEFT JOIN cab_feedback f ON cb.booking_id = f.booking_id
                           WHERE cb.user_id = '$uid' 
                           ORDER BY cb.created_at DESC";
     $my_bookings_res = $conn->query($my_bookings_query);
@@ -1278,6 +1289,19 @@ if (!$db_connection_error) {
             <?php if ($my_bookings_res && $my_bookings_res->num_rows > 0): ?>
                 <?php while ($b = $my_bookings_res->fetch_assoc()): 
                     $b_status = $b['booking_status'];
+                    if ($b_status === 'active') {
+                        $current_time = new DateTime();
+                        $cstart = new DateTime($b['booking_date'] . ' ' . $b['pick_up_time']);
+                        if ($current_time >= $cstart) {
+                            $cend = clone $cstart;
+                            $cend->modify('+3 hours'); // Cab rides complete 3 hours after pickup
+                            if ($current_time > $cend) {
+                                $b_status = 'completed';
+                            } else {
+                                $b_status = 'ongoing';
+                            }
+                        }
+                    }
                 ?>
                     <div class="cab-card" style="flex-direction: row; align-items: center; padding: 20px; gap: 20px; flex-wrap: wrap;">
                         <div style="width: 120px; height: 90px; border-radius: 12px; overflow: hidden; background: var(--bg-sub); flex-shrink: 0;">
@@ -1310,6 +1334,19 @@ if (!$db_connection_error) {
                                         Cancel Ride
                                     </button>
                                 </form>
+                            <?php elseif ($b_status === 'completed'): ?>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <?php if (empty($b['rating'])): ?>
+                                        <button onclick="showFeedbackModal('<?php echo htmlspecialchars($b['booking_id']); ?>', '<?php echo htmlspecialchars($b['cab_id']); ?>')" style="background:#FFEDE5; color:var(--primary); border:none; padding:8px 16px; border-radius:8px; font-weight:600; font-size:0.8rem; cursor:pointer; transition:0.2s;">
+                                            Rate Ride
+                                        </button>
+                                    <?php else: ?>
+                                        <span style="font-size:0.95rem; color:#FFD700; font-weight:700; margin-right: 8px;"><i class="fas fa-star"></i> <?php echo htmlspecialchars($b['rating']); ?>/5</span>
+                                    <?php endif; ?>
+                                    <a href="generate_invoice.php?booking_id=<?php echo htmlspecialchars($b['booking_id']); ?>" target="_blank" style="background:#F1F5F9; color:#475569; border:1px solid #E2E8F0; padding:8px 16px; border-radius:8px; font-weight:600; font-size:0.8rem; text-decoration:none; display:inline-block; transition:0.2s;" onmouseover="this.style.background='#E2E8F0'; this.style.color='#0F172A';" onmouseout="this.style.background='#F1F5F9'; this.style.color='#475569';">
+                                        <i class="fas fa-file-pdf" style="margin-right:6px;"></i>Invoice
+                                    </a>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -3,37 +3,71 @@ session_start();
 include('includes/db.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = $_POST['password'];
     $redirect_url = isset($_POST['redirect_url']) ? $_POST['redirect_url'] : 'index.php';
 
-    $query = "SELECT * FROM users WHERE email='$email'";
-    $result = mysqli_query($conn, $query);
+    if (isset($_POST['register'])) {
+        $name = mysqli_real_escape_string($conn, $_POST['name']);
+        $email = mysqli_real_escape_string($conn, $_POST['email']);
+        $phone = mysqli_real_escape_string($conn, $_POST['phone']);
+        $password = $_POST['password'];
 
-    if (mysqli_num_rows($result) == 1) {
-        $row = mysqli_fetch_assoc($result);
-        if (password_verify($password, $row['password'])) {
-            $_SESSION['loggedin'] = true;
-            $_SESSION['email'] = $email;
-            $_SESSION['user_role'] = $row['role'];
-            $_SESSION['user_id'] = $row['user_id'];
+        $check_email_query = "SELECT * FROM users WHERE email='$email'";
+        $result = mysqli_query($conn, $check_email_query);
 
-            session_write_close();
-            if ($row['role'] === 'admin') {
-                header("Location: admin/dashboard.php");
-            } else {
-                header("Location: $redirect_url");
-            }
-            exit;
-        } else {
+        if (mysqli_num_rows($result) > 0) {
             $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
-            header("Location: " . $redirect_url . $separator . "error=incorrect_password");
+            header("Location: " . $redirect_url . $separator . "error=email_exists");
             exit();
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $insert_query = "INSERT INTO users (name, email, phone, password) VALUES ('$name', '$email', '$phone', '$hashed_password')";
+
+            if (mysqli_query($conn, $insert_query)) {
+                $_SESSION['loggedin'] = true;
+                $_SESSION['email'] = $email;
+                $_SESSION['user_id'] = mysqli_insert_id($conn);
+                $_SESSION['user_role'] = 'user';
+                session_write_close();
+                header('Location: ' . $redirect_url);
+                exit();
+            } else {
+                $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
+                header("Location: " . $redirect_url . $separator . "error=register_failed");
+                exit();
+            }
         }
     } else {
-        $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
-        header("Location: " . $redirect_url . $separator . "error=invalid_email");
-        exit();
+        $email = mysqli_real_escape_string($conn, $_POST['email']);
+        $password = $_POST['password'];
+
+        $query = "SELECT * FROM users WHERE email='$email'";
+        $result = mysqli_query($conn, $query);
+
+        if (mysqli_num_rows($result) == 1) {
+            $row = mysqli_fetch_assoc($result);
+            if (password_verify($password, $row['password'])) {
+                $_SESSION['loggedin'] = true;
+                $_SESSION['email'] = $email;
+                $_SESSION['user_role'] = $row['role'];
+                $_SESSION['user_id'] = $row['user_id'];
+
+                session_write_close();
+                if ($row['role'] === 'admin') {
+                    header("Location: admin/dashboard.php");
+                } else {
+                    header("Location: $redirect_url");
+                }
+                exit;
+            } else {
+                $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
+                header("Location: " . $redirect_url . $separator . "error=incorrect_password");
+                exit();
+            }
+        } else {
+            $separator = (strpos($redirect_url, '?') !== false) ? '&' : '?';
+            header("Location: " . $redirect_url . $separator . "error=invalid_email");
+            exit();
+        }
     }
 }
 
