@@ -4,12 +4,15 @@ include('includes/db.php');
 require 'includes/header.php';
 
 // POST data from booking-details.php (only update if fields are present)
+// POST data from booking-details.php (only update if fields are present)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customer_name'])) {
     $_SESSION['customer_name'] = $_POST['customer_name'];
     $_SESSION['customer_phone'] = $_POST['customer_phone'];
     $_SESSION['id_proof'] = $_POST['id_proof'];
     $_SESSION['pick_up_time'] = $_POST['pick_up_time'];
     $_SESSION['drop_off_time'] = $_POST['drop_off_time'];
+    $_SESSION['is_pickup'] = isset($_POST['is_pickup']) ? 1 : 0;
+    $_SESSION['pickup_address'] = $_POST['pickup_address'] ?? '';
 }
 
 $bike_id = $_SESSION['selected_bike_id'] ?? '';
@@ -203,6 +206,16 @@ $final_amount = $total_before_discount - $discount;
                 <span>Dates</span>
                 <b><?php echo htmlspecialchars($start_date); ?> to <?php echo htmlspecialchars($end_date); ?></b>
             </div>
+            <?php if (!empty($_SESSION['is_pickup'])): ?>
+            <div class="summary-item" style="color: var(--primary);">
+                <span>Pick-up Service</span>
+                <b>Requested</b>
+            </div>
+            <div class="summary-item">
+                <span>Pick-up Address</span>
+                <b style="text-align: right; max-width: 60%;"><?php echo htmlspecialchars($_SESSION['pickup_address']); ?></b>
+            </div>
+            <?php endif; ?>
 
             <div class="payment-placeholder">
                 <i class="fas fa-credit-card"></i>

@@ -265,6 +265,7 @@ $base_url = '../';
                 class="<?php echo basename($_SERVER['PHP_SELF']) == 'completed_bookings.php' ? 'active' : ''; ?>">Completed Bookings</a>
             <a href="../Taxi-Booking/manage-cabs.php"
                 class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage-cabs.php' ? 'active' : ''; ?>"><i class="fas fa-taxi" style="margin-right:5px;"></i>Manage Cabs</a>
+            <a href="profile.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : ''; ?>"><i class="fas fa-user-circle" style="margin-right:5px;"></i>Profile</a>
             <a href="../logout.php" style="color: #F87171;"><i class="fas fa-power-off"></i></a>
         </div>
     </nav>

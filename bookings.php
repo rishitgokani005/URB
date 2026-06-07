@@ -2,11 +2,19 @@
     session_start();
     require 'includes/header.php';
 
+<<<<<<< HEAD
     // Check if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         header("Location: login.php?redirect_url=" . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
+=======
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+>>>>>>> 6b6a737dcbb1df05869bf7d2d29e2df8dc374679
 
     // Database connection parameters
     $servername = "localhost";
@@ -45,6 +53,7 @@
     $stmt->execute();
     $result = $stmt->get_result();
 
+<<<<<<< HEAD
     // Fetch user CAB bookings
     $cab_sql = "SELECT c.booking_id, c.cab_id, c.pickup_location, c.drop_location,
                     c.booking_date, c.return_date, c.booking_status,
@@ -56,6 +65,17 @@
                 LEFT JOIN cab_feedback f ON c.booking_id = f.booking_id
                 WHERE c.user_id = ?
                 ORDER BY c.booking_date DESC";
+=======
+// Fetch user CAB bookings
+$cab_sql = "SELECT c.booking_id, c.cab_id, c.pickup_location, c.drop_location,
+                   c.booking_date, c.return_date, c.booking_status,
+                   c.pick_up_time, c.total_price, c.trip_type,
+                   a.cab_name, a.seats, a.image, a.image2 as ac_status
+            FROM acabookings c
+            JOIN acab a ON c.cab_id = a.id
+            WHERE c.user_id = ?
+            ORDER BY c.booking_date DESC";
+>>>>>>> 6b6a737dcbb1df05869bf7d2d29e2df8dc374679
 
     $cab_stmt = $conn->prepare($cab_sql);
     if ($cab_stmt) {
@@ -117,6 +137,252 @@
                 gap: 25px;
             }
 
+<<<<<<< HEAD
+=======
+        .premium-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #E2E8F0;
+            display: flex;
+            gap: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .premium-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-bike-icon {
+            width: 140px;
+            height: 100px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .card-bike-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-content {
+            flex-grow: 1;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .card-top h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .status-pill {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill[data-status="pending"] { background: #FEF3C7; color: #92400E; }
+        .status-pill[data-status="ongoing"] { background: #DCFCE7; color: #166534; }
+        .status-pill[data-status="completed"] { background: #F1F5F9; color: #475569; }
+        .status-pill[data-status="cancelled"] { background: #FEE2E2; color: #991B1B; }
+
+        .card-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+
+        .detail-item i {
+            color: var(--primary);
+            width: 16px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px dashed #E2E8F0;
+        }
+
+        .booking-id-text {
+            font-family: monospace;
+            background: #F1F5F9;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .btn-cancel-trigger {
+            background: #FEE2E2;
+            color: #EF4444;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cancel-trigger:hover {
+            background: #EF4444;
+            color: white;
+        }
+
+        /* Slide-up Container Styles */
+        #cancellation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #cancellation-container {
+            position: fixed;
+            bottom: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            height: 90vh; /* Little space at top */
+            background: white;
+            border-radius: 40px 40px 0 0;
+            z-index: 3001;
+            padding: 40px 30px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transition: bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #cancellation-container.active {
+            bottom: 0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .close-modal {
+            background: #F1F5F9;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .reason-list {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .reason-item {
+            margin-bottom: 12px;
+        }
+
+        .reason-item input[type="radio"] {
+            display: none;
+        }
+
+        .reason-label {
+            display: block;
+            padding: 16px 20px;
+            background: #F8FAFC;
+            border: 2px solid #F1F5F9;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .reason-item input[type="radio"]:checked + .reason-label {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        #other-reason-text {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #E2E8F0;
+            display: none;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .btn-confirm-cancel {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(255, 77, 1, 0.2);
+        }
+
+        .message {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4000;
+        }
+
+        @media (max-width: 768px) {
+>>>>>>> 6b6a737dcbb1df05869bf7d2d29e2df8dc374679
             .premium-card {
                 background: white;
                 border-radius: 24px;
@@ -491,6 +757,7 @@
                 <?php endif; ?>
             </div>
 
+<<<<<<< HEAD
             <!-- ===== CAB BOOKINGS ===== -->
             <div id="section-cabs" class="bookings-grid" style="display:none;">
                 <?php if ($cab_result && $cab_result->num_rows > 0): ?>
@@ -549,6 +816,47 @@
                                         </div>
                                     <?php endif; ?>
                                 </div>
+=======
+        <!-- ===== CAB BOOKINGS ===== -->
+        <div id="section-cabs" class="bookings-grid" style="display:none;">
+            <?php if ($cab_result && $cab_result->num_rows > 0): ?>
+                <?php while ($crow = $cab_result->fetch_assoc()): ?>
+                    <?php
+                        $current_time  = new DateTime();
+                        $cstart        = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
+                        $cstatus       = $crow['booking_status'];
+                        if ($cstatus === 'active') {
+                            if ($current_time < $cstart) $cstatus = 'pending';
+                            else $cstatus = 'ongoing';
+                        }
+                        $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
+                    ?>
+                    <div class="premium-card">
+                        <div class="card-bike-icon" style="background:#EFF6FF;">
+                            <img src="<?= $cab_img ?>" alt="<?= htmlspecialchars($crow['cab_name']) ?>" onerror="this.src='images/home_3.png'">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-top">
+                                <h3><?= htmlspecialchars($crow['cab_name']) ?></h3>
+                                <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-item"><i class="fas fa-couch"></i><span>Seats: <b><?= $crow['seats'] ?> Seater</b></span></div>
+                                <div class="detail-item"><i class="fas fa-snowflake"></i><span>AC: <b><?= htmlspecialchars($crow['ac_status'] ?? 'AC') ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-location-dot"></i><span>From: <b><?= htmlspecialchars($crow['pickup_location']) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-flag-checkered"></i><span>To: <b><?= htmlspecialchars($crow['drop_location']) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?> at <?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span></div>
+                                <div class="detail-item"><i class="fas fa-indian-rupee-sign"></i><span>Total: <b>₹<?= number_format($crow['total_price'], 2) ?></b></span></div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="booking-id-text">ID: <?= htmlspecialchars($crow['booking_id']) ?></span>
+                                <?php if ($cstatus === 'pending'): ?>
+                                    <form method="POST" action="Taxi-Booking/cancel_booking.php" style="display:inline;">
+                                        <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
+                                        <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
+                                    </form>
+                                <?php endif; ?>
+>>>>>>> 6b6a737dcbb1df05869bf7d2d29e2df8dc374679
                             </div>
                         </div>
                     <?php endwhile; ?>

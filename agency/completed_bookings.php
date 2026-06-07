@@ -2,6 +2,18 @@
 include('header.php');
 ?>
 
+<style>
+    .booking-card.is-cancelled {
+        background: #FEE2E2 !important;
+        border-color: #FECACA !important;
+    }
+    .booking-card.is-cancelled .booking-main-details h3,
+    .booking-card.is-cancelled .booking-main-details p,
+    .booking-card.is-cancelled .booking-date-highlight b {
+        color: #991B1B !important;
+    }
+</style>
+
 <div class="header-row reveal" style="margin-bottom: 30px;">
     <div style="display: flex; align-items: center; gap: 15px;">
         <i class="fas fa-history" style="font-size: 2rem; color: var(--primary);"></i>
@@ -18,12 +30,13 @@ include('header.php');
             FROM abookings b
             JOIN abike a ON b.bike_id = a.id
             WHERE b.agency_id = '$agency_id'
-            ORDER BY b.booking_date DESC, b.pick_up_time DESC";
+            ORDER BY b.booking_id DESC";
     $res = $conn->query($sql);
     $found = false;
     if($res->num_rows > 0):
         while($row = $res->fetch_assoc()):
             $is_offline = ($row['name'] === 'OFFLINE BOOKING');
+            $is_cancelled = ($row['booking_status'] === 'cancelled');
             
             // Precise Status Logic using DateTime
             $current_time = new DateTime();
@@ -33,7 +46,7 @@ include('header.php');
             $status = 'Completed';
             $status_class = 'badge-completed';
             
-            if ($row['booking_status'] === 'cancelled') {
+            if ($is_cancelled) {
                 $status = 'Cancelled';
                 $status_class = 'badge-cancelled';
             } else {
@@ -50,10 +63,10 @@ include('header.php');
             }
 
             // FILTER: Only show Completed or Cancelled in this page
-            if ($status !== 'Completed' && $status !== 'Cancelled') continue;
+            if ($status !== 'Completed' && !$is_cancelled) continue;
             $found = true;
     ?>
-    <div class="booking-card">
+    <div class="booking-card <?php echo $is_cancelled ? 'is-cancelled' : ''; ?>">
         <div class="booking-bike-info">
             <h4 style="font-size: 1.1rem;"><?php echo htmlspecialchars($row['model']); ?></h4>
             <span style="font-size: 0.75rem; color: var(--text-sub);">Color: <?php echo ucfirst($row['color']); ?></span>
@@ -65,6 +78,9 @@ include('header.php');
             </h3>
             <p><i class="fas fa-hashtag"></i> ID: <?php echo $row['booking_id']; ?></p>
             <p><i class="fas fa-phone"></i> <?php echo $row['mobile']; ?></p>
+            <?php if (!empty($row['is_pickup'])): ?>
+                <p style="color: var(--primary);"><i class="fas fa-truck"></i> Pick-up: <?php echo htmlspecialchars($row['pickup_address']); ?></p>
+            <?php endif; ?>
             <p><i class="fas fa-clock"></i> Pickup: <?php echo date('h:i A', strtotime($row['pick_up_time'])); ?></p>
             <p><i class="fas fa-receipt"></i> Amount: <b>₹<?php echo number_format($row['total_price'], 2); ?></b></p>
         </div>
