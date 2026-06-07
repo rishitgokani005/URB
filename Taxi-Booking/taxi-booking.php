@@ -1051,6 +1051,23 @@ $is_logged_in = isset($_SESSION['loggedin']);
     <input type="hidden" id="est_distance" value="<?php echo htmlspecialchars($est_distance); ?>">
 <?php endif; ?>
 
+<?php if (!$is_logged_in): ?>
+    <?php require '../includes/login_modal.php'; ?>
+    <script>
+        window.onload = function() {
+            showLoginModal();
+        }
+    </script>
+    <div class="compulsory-login-overlay" style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background: #fdfdfd; padding: 2rem;">
+        <div style="text-align: center; max-width: 500px;">
+            <i class="fas fa-lock" style="font-size: 4rem; color: var(--primary); margin-bottom: 2rem; opacity: 0.3;"></i>
+            <h2 style="font-family: 'Outfit', sans-serif; color: #333; font-weight: 800; font-size: 2.2rem;">Please login to book a taxi</h2>
+            <p style="color: #64748B; margin-top: 1rem; font-size: 1.1rem;">Login or create an account to access our premium fleet and start booking your rides.</p>
+            <button onclick="showLoginModal()" class="search-go-taxi" style="margin-top: 2rem; width: auto; padding: 1rem 3rem;">Login Now</button>
+        </div>
+    </div>
+<?php else: ?>
+
 <?php if (!$agency): ?>
 <!-- Hero Section mirroring index.php layout -->
 <section class="taxi-hero">
@@ -1668,5 +1685,7 @@ $is_logged_in = isset($_SESSION['loggedin']);
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+
+<?php endif; ?>
 
 <?php require '../includes/footer.php'; ?>
