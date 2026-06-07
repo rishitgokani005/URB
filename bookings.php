@@ -325,42 +325,6 @@ if ($cab_stmt) {
             padding: 25px;
         }
 
-        .btn-rate-trigger {
-            background: #FFEDE5;
-            color: var(--primary);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .btn-rate-trigger:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-invoice-trigger {
-            background: #F1F5F9;
-            color: #475569;
-            border: 1px solid #E2E8F0;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: var(--transition);
-        }
-
-        .btn-invoice-trigger:hover {
-            background: #E2E8F0;
-            color: #0F172A;
-        }
-
         .details-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -664,83 +628,50 @@ if ($cab_stmt) {
                     $cstart = new DateTime($crow['booking_date'] . ' ' . $crow['pick_up_time']);
                     $cstatus = $crow['booking_status'];
                     if ($cstatus === 'active') {
-                        if ($current_time < $cstart) {
+                        if ($current_time < $cstart)
                             $cstatus = 'pending';
-                        } else {
-                            $cend = clone $cstart;
-                            $cend->modify('+3 hours'); // Cab rides complete 3 hours after pickup
-                            if ($current_time > $cend) {
-                                $cstatus = 'completed';
-                            } else {
-                                $cstatus = 'ongoing';
-                            }
-                        }
+                        else
+                            $cstatus = 'ongoing';
                     }
                     $cab_img = 'Taxi-Booking/Cabs Photo/' . htmlspecialchars($crow['image']);
-            ?>
-            <div class="premium-card">
-                <div class="card-main-info">
-                    <div>
-                        <h3 class="bike-model-title"><?= htmlspecialchars($crow['cab_name']) ?></h3>
-                        <div class="booking-dates-row">
-                            <span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?></b></span>
-                            <span>Time: <b><?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span>
-                        </div>
-                        <div class="location-row">
-                            <i class="fas fa-location-dot"></i>
-                            <span><?= htmlspecialchars($crow['pickup_location']) ?> →
-                                <?= htmlspecialchars($crow['drop_location']) ?></span>
+                    ?>
+                    <div class="premium-card">
+                        <div class="card-main-info">
+                            <div>
+                                <h3 class="bike-model-title"><?= htmlspecialchars($crow['cab_name']) ?></h3>
+                                <div class="booking-dates-row">
+                                    <span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?></b></span>
+                                    <span>Time: <b><?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span>
+                                </div>
+                                <div class="location-row">
+                                    <i class="fas fa-location-dot"></i>
+                                    <span><?= htmlspecialchars($crow['pickup_location']) ?> →
+                                        <?= htmlspecialchars($crow['drop_location']) ?></span>
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+                                <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
+                                <button class="details-trigger" onclick='openDetailsModal(<?= json_encode([
+                                    "type" => "Taxi",
+                                    "title" => $crow["cab_name"],
+                                    "image" => $cab_img,
+                                    "seats" => $crow["seats"] . " Seater",
+                                    "ac" => $crow["ac_status"] ?? "AC",
+                                    "pickup" => $crow["pickup_location"],
+                                    "drop" => $crow["drop_location"],
+                                    "from" => date("d M Y, h:i A", strtotime($crow["booking_date"] . " " . $crow["pick_up_time"])),
+                                    "id" => $crow["booking_id"],
+                                    "price" => "₹" . number_format($crow["total_price"], 2),
+                                    "status" => $cstatus,
+                                    "agency_name" => $crow["agency_name"] ?? "UrbanRide Partner",
+                                    "agency_phone" => $crow["agency_phone"] ?? "Not Provided"
+                                ]) ?>)'>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
-                        <span class="status-pill" data-status="<?= $cstatus ?>"><?= ucfirst($cstatus) ?></span>
-                        <button class="details-trigger" onclick='openDetailsModal(<?= json_encode([
-                            "type" => "Taxi",
-                            "title" => $crow["cab_name"],
-                            "image" => $cab_img,
-                            "seats" => $crow["seats"] . " Seater",
-                            "ac" => $crow["ac_status"] ?? "AC",
-                            "pickup" => $crow["pickup_location"],
-                            "drop" => $crow["drop_location"],
-                            "from" => date("d M Y, h:i A", strtotime($crow["booking_date"] . " " . $crow["pick_up_time"])),
-                            "id" => $crow["booking_id"],
-                            "price" => "₹" . number_format($crow["total_price"], 2),
-                            "status" => $cstatus,
-                            "agency_name" => $crow["agency_name"] ?? "UrbanRide Partner",
-                            "agency_phone" => $crow["agency_phone"] ?? "Not Provided"
-                        ]) ?>)'>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <div class="detail-item"><i class="fas fa-couch"></i><span>Seats: <b><?= $crow['seats'] ?> Seater</b></span></div>
-                    <div class="detail-item"><i class="fas fa-snowflake"></i><span>AC: <b><?= htmlspecialchars($crow['ac_status'] ?? 'AC') ?></b></span></div>
-                    <div class="detail-item"><i class="fas fa-location-dot"></i><span>From: <b><?= htmlspecialchars($crow['pickup_location']) ?></b></span></div>
-                    <div class="detail-item"><i class="fas fa-flag-checkered"></i><span>To: <b><?= htmlspecialchars($crow['drop_location']) ?></b></span></div>
-                    <div class="detail-item"><i class="fas fa-calendar-alt"></i><span>Date: <b><?= date('d M Y', strtotime($crow['booking_date'])) ?> at <?= date('h:i A', strtotime($crow['pick_up_time'])) ?></b></span></div>
-                    <div class="detail-item"><i class="fas fa-indian-rupee-sign"></i><span>Total: <b>₹<?= number_format($crow['total_price'], 2) ?></b></span></div>
-                </div>
-                <div class="card-footer">
-                    <span class="booking-id-text">ID: <?= htmlspecialchars($crow['booking_id']) ?></span>
-                    <?php if ($cstatus === 'pending'): ?>
-                        <form method="POST" action="Taxi-Booking/cancel_booking.php" style="display:inline;">
-                            <input type="hidden" name="booking_id" value="<?= $crow['booking_id'] ?>">
-                            <button type="submit" class="btn-cancel-trigger" onclick="return confirm('Cancel this taxi booking?')">Cancel Ride</button>
-                        </form>
-                    <?php elseif ($cstatus === 'completed'): ?>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <?php if (empty($crow['rating'])): ?>
-                                <button class="btn-rate-trigger" onclick="showFeedbackModal('<?= $crow['booking_id'] ?>', '<?= $crow['cab_id'] ?>')">Rate Ride</button>
-                            <?php else: ?>
-                                <span style="font-size:0.95rem; color:#FFD700; font-weight:700; margin-right: 8px;"><i class="fas fa-star"></i> <?= $crow['rating'] ?>/5</span>
-                            <?php endif; ?>
-                            <a href="Taxi-Booking/generate_invoice.php?booking_id=<?= $crow['booking_id'] ?>" class="btn-invoice-trigger" target="_blank"><i class="fas fa-file-pdf"></i> Invoice</a>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        <?php endwhile; ?>
+                <?php endwhile; ?>
             <?php else: ?>
                 <div class="empty-state" style="padding:80px; text-align:center; background:white; border-radius:24px;">
                     <i class="fas fa-taxi" style="font-size:4rem; color:#E2E8F0; margin-bottom:20px; display:block;"></i>
