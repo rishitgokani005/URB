@@ -4,6 +4,9 @@ $is_compulsory = isset($compulsory_login) && $compulsory_login;
 $login_error = isset($_GET['error']) ? $_GET['error'] : '';
 $is_register_error = in_array($login_error, ['email_exists', 'register_failed']);
 $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']);
+
+// Load config for Google client ID
+include_once __DIR__ . '/config.php';
 ?>
 
 <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; z-index: 3000; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px);">
@@ -25,13 +28,15 @@ $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']
             </h2>
             <p style="text-align: center; color: var(--text-sub); margin-bottom: 2rem;">Enter your credentials to continue</p>
             
-            <?php if ($is_login_error): ?>
+            <?php if ($is_login_error || $login_error === 'google_auth_failed'): ?>
                 <div class="login-error-message" style="background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #FEE2E2; text-align: center; font-weight: 500;">
                     <?php
                     if ($login_error === 'incorrect_password') {
                         echo "Incorrect password. Please try again.";
                     } elseif ($login_error === 'invalid_email') {
                         echo "No account found with this email. Please register or check your email.";
+                    } elseif ($login_error === 'google_auth_failed') {
+                        echo "Google authentication failed. Please try again.";
                     }
                     ?>
                 </div>
@@ -53,6 +58,16 @@ $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']
                 </div>
                 <button type="submit" class="btn-signup" style="width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.1rem;">Login Now</button>
             </form>
+
+            <div style="margin: 1.2rem 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-sub);">
+                <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+                <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">or</span>
+                <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <div id="google-login-btn-login"></div>
+            </div>
             <div class="modal-footer" style="margin-top: 2rem; text-align: center;">
                 <p style="color: var(--text-sub);">Don't have an account? <a href="javascript:void(0)" onclick="showRegisterForm()" style="color: var(--primary); font-weight: 700;">Join for free</a></p>
                 <a href="<?php echo $base_url; ?>request_reset.php" style="display: block; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub);">Forgot Password?</a>
@@ -117,6 +132,17 @@ $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']
 
                 <button type="submit" name="register" class="btn-signup" style="width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.1rem;">Register Now</button>
             </form>
+
+            <div style="margin: 1.2rem 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-sub);">
+                <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+                <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">or</span>
+                <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <div id="google-login-btn-register"></div>
+            </div>
+
             <div class="modal-footer" style="margin-top: 2rem; text-align: center;">
                 <p style="color: var(--text-sub);">Already have an account? <a href="javascript:void(0)" onclick="showLoginForm()" style="color: var(--primary); font-weight: 700;">Sign In</a></p>
             </div>
@@ -166,7 +192,7 @@ $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']
     }
 
     // Auto-show modal and switch view if there's an error
-    if (<?php echo json_encode($is_login_error); ?>) {
+    if (<?php echo json_encode($is_login_error || $login_error === 'google_auth_failed'); ?>) {
         showLoginForm();
         showLoginModal();
     } else if (<?php echo json_encode($is_register_error); ?>) {
@@ -186,4 +212,58 @@ $is_login_error = in_array($login_error, ['incorrect_password', 'invalid_email']
             }
         });
     }
+
+    // Google Sign-In Initialization
+    function initGoogleAuth() {
+        if (typeof google !== 'undefined') {
+            google.accounts.id.initialize({
+                client_id: <?php echo json_encode(GOOGLE_CLIENT_ID); ?>,
+                callback: handleCredentialResponse
+            });
+            
+            const loginBtn = document.getElementById('google-login-btn-login');
+            if (loginBtn) {
+                google.accounts.id.renderButton(loginBtn, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: 350
+                });
+            }
+
+            const registerBtn = document.getElementById('google-login-btn-register');
+            if (registerBtn) {
+                google.accounts.id.renderButton(registerBtn, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: 350
+                });
+            }
+        }
+    }
+
+    // Google Sign-In Callback
+    function handleCredentialResponse(response) {
+        const idToken = response.credential;
+        const redirectUrl = <?php echo json_encode($_SERVER['REQUEST_URI']); ?>;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = <?php echo json_encode($base_url . 'google_auth.php'); ?>;
+        
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = 'id_token';
+        tokenInput.value = idToken;
+        form.appendChild(tokenInput);
+        
+        const redirectInput = document.createElement('input');
+        redirectInput.type = 'hidden';
+        redirectInput.name = 'redirect_url';
+        redirectInput.value = redirectUrl;
+        form.appendChild(redirectInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
+<script src="https://accounts.google.com/gsi/client" onload="initGoogleAuth()" async defer></script>
